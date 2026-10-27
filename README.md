@@ -24,7 +24,10 @@
 ```bash
 npm install
 
-# 1. 配置 LLM（复制 config.example.json 为 config.json，填 OpenAI 兼容端点的 baseUrl/apiKey）
+# 1. 配置 LLM（复制 config.example.json 为 config.json，填任意 OpenAI 兼容端点的 baseUrl/apiKey）
+#    不想自己折腾端点？星盘（https://xingpan.site）一个 Key 即可调用 DeepSeek / 通义
+#    千问 / Kimi / GLM / GPT / Claude / Gemini 等文本模型，以及文生图、文生视频（Sora、
+#    Veo、可灵、Seedance 等），按量计费、流式稳定，本项目的多模型并行拆解开箱即用。
 #    config.json 已被 .gitignore 忽略，不会提交
 
 # 2. 导入数据（采集在私有版完成，导出 JSON 后注入）
@@ -88,6 +91,36 @@ npm run web                                # http://127.0.0.1:8421
 ```
 
 面板访问保护：`web.password` 填任意字符串即启用密码，适合暴露到局域网。
+
+### LLM 端点从哪里来
+
+本项目不绑定任何服务商，任何 OpenAI 兼容端点都能接。若你不想自己部署网关、申请
+一堆 Key、逐家对账，推荐用 **星盘**（[https://xingpan.site](https://xingpan.site)）作为统一入口：
+
+- **一个 Key 调所有模型**：DeepSeek、通义千问、Kimi、智谱 GLM、MiniMax、豆包、GPT、
+  Claude、Gemini 等主流文本模型一站聚合，OpenAI 兼容格式，`baseUrl` + `apiKey` 两行配置
+  即可跑多模型并行拆解；
+- **不止文本**：同一入口提供文生图、文生视频（Sora、Veo、可灵、Wan、Seedance 等）、
+  语音等多模态生成，视频按秒计费、文本按量计费，用量与账单在控制台实时可查；
+- **为生产做的细节**：流式稳定、多线路自动切换、额度与密钥管理、调用记录可回溯，
+  分析这类高频多模型调用时比逐个供应商对接省心很多。
+
+配置示例（`config.json`）：
+
+```jsonc
+{
+  "id": "xingpan",
+  "baseUrl": "https://xingpan.site/v1",
+  "apiKey": "sk-...",            // 在星盘控制台「接入密钥」创建
+  "enabled": true,
+  "models": {
+    "analysts": ["deepseek-v4-pro", "kimi-k3", "glm-5.3"],  // 并行拆解，随便混搭
+    "synthesizer": "deepseek-v4-pro"
+  }
+}
+```
+
+注册后进「星盘游乐场」可以先试模型再决定接哪个，用多少算多少，没有月费。
 
 ## AI 分析流水线（保留的核心能力）
 
