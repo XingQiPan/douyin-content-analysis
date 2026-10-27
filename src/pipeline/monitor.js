@@ -3,7 +3,7 @@ import { loadConfig } from '../core/config.js';
 import { startRun, finishRun, upsertBlogger, insertVideo, getVideoByAwemeId, updateVideo, listVideos, markBloggerChecked, replaceComments, getBloggerById, insertVideoSnapshot, insertBloggerSnapshot, insertCompetitorAlert } from '../core/db.js';
 import { fetchProfile } from '../data/profile.js';
 import { fetchVideoComments } from '../data/comments.js';
-import { parseShortVideo, downloadVideo } from '../data/share.js';
+import { parseShortVideo, downloadVideo } from '../douyin/share.js';
 import { transcribeVideo } from '../media/transcribe.js';
 import { analyzeVideo } from '../analysis/pipeline.js';
 import { generateDailyReport } from '../report/daily.js';

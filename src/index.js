@@ -2,6 +2,7 @@
 // douyin content analysis —— 开源版 CLI 入口
 // 命令：
 //   npm run import -- <file.json>       导入本地数据（采集在私有版完成）
+//   npm run download -- <链接|aweme_id> 免登录解析并下载单个公开视频
 //   node src/index.js list              列出监控博主
 //   node src/index.js enable|disable    启停博主
 //   npm run analyze -- <aweme_id>       单视频补跑 AI 分析
@@ -66,12 +67,38 @@ async function main() {
       break;
     }
 
+    case 'download': {
+      // 免登录解析并下载单个公开视频（不依赖登录态）
+      if (!args[0]) {
+        console.error('用法: npm run download -- <分享链接 或 aweme_id>');
+        process.exit(1);
+      }
+      const { parseShortVideo, downloadVideo, awemeIdFromUrl } = await import('./douyin/share.js');
+      const { mkdirSync } = await import('node:fs');
+      const path_ = await import('node:path');
+      const { fileURLToPath } = await import('node:url');
+      const ROOT = path_.resolve(path_.dirname(fileURLToPath(import.meta.url)), '..');
+      const parsed = await parseShortVideo(args[0], { retries: 6 });
+      if (parsed.isGallery) {
+        console.log(`是图集「${parsed.title}」，无视频直链可下载。`);
+        process.exit(0);
+      }
+      const dir = path_.join(ROOT, 'data', 'videos');
+      mkdirSync(dir, { recursive: true });
+      const awemeId = parsed.awemeId || awemeIdFromUrl(args[0]);
+      const filePath = await downloadVideo(parsed, dir, awemeId);
+      logger.info(`✅ 视频下载完成: ${filePath}`);
+      console.log(`标题: ${parsed.title}`);
+      console.log(`链接: ${parsed.playUrl}`);
+      break;
+    }
+
     case 'analyze': {
       if (!args[0]) {
         console.error('用法: npm run analyze -- <aweme_id 或视频链接>');
         process.exit(1);
       }
-      const { awemeIdFromUrl } = await import('./data/share.js');
+      const { awemeIdFromUrl } = await import('./douyin/share.js');
       let awemeId = /^\d{15,25}$/.test(args[0]) ? args[0] : awemeIdFromUrl(args[0]);
       if (!awemeId) {
         console.error('无法解析 aweme_id');
@@ -127,12 +154,13 @@ async function main() {
   npm run import -- <file.json>         导入已采集的数据到本地库
   node src/index.js list                查看博主列表
   node src/index.js enable|disable <id|sec_uid>   启停博主
+  npm run download -- <链接|aweme_id>    免登录解析并下载单个公开视频
   npm run analyze -- <aweme_id>         对已导入视频补跑 AI 分析（--force 重跑）
   npm run report -- <id> [条数]          立即生成日报
   npm run web                           本地面板（监控/雷达/选题/日报/可视化）
   npm run daemon                        定时调度 + 面板
 
-注：本开源版不含采集能力，数据通过 npm run import 从私有采集环境注入。`);
+注：本开源版含免登录视频下载；博主/评论/搜索等登录态采集请用私有版后 npm run import 导入。`);
   }
 }
 

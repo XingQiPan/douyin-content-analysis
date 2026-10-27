@@ -11,7 +11,7 @@ async function unsupported() {
 }
 
 export const launchBrowser = () => unsupported();
-export const isLoggedIn = () => unsupported();
+export const isLoggedIn = () => unsupported(); // 桩：开源版无账号会话
 export const closeBrowser = () => Promise.resolve();
 export const acquireBrowserLock = async () => () => {};
 export const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -9,6 +9,7 @@
   },
   "scripts": {
     "import": "node src/import.js",
+    "download": "node src/index.js download",
     "analyze": "node src/index.js analyze",
     "report": "node src/index.js report",
     "web": "node src/index.js web",

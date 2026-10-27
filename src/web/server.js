@@ -463,7 +463,7 @@ input:focus{border-color:#0a84ff;box-shadow:0 0 0 3px rgba(10,132,255,.16)}butto
     if (v.video_path && existsSync(v.video_path)) return res.json({ ok: true, already: true });
     res.json({ ok: true, message: '下载已启动' });
     (async () => {
-      const { parseShortVideo, downloadVideo } = await import('../data/share.js');
+      const { parseShortVideo, downloadVideo } = await import('../douyin/share.js');
       const parsed = await parseShortVideo(v.aweme_id, { retries: 6 });
       if (parsed.isGallery) {
         logger.warn(`[web触发] ${v.aweme_id} 是图集，无可下载视频`);
