@@ -1,0 +1,95 @@
+{
+  "bloggers": [
+    {
+      "secUid": "MS4wLjABAAAA_ExampleUser1",
+      "nickname": "AI 工具观察",
+      "signature": "每天测评一个 AI 工具 | 干货分享",
+      "avatar": null,
+      "followerCount": 128500,
+      "videos": [
+        {
+          "awemeId": "7400000000000000001",
+          "title": "DeepSeek 隐藏玩法，写爆款文案提效 10 倍",
+          "createTime": 1710000000,
+          "durationSec": 45,
+          "stats": { "digg": 3200, "comment": 210, "share": 88, "collect": 1024, "play": 80000 },
+          "cover": null,
+          "transcriptText": "今天讲三个 DeepSeek 的隐藏玩法……第一，让 AI 生成多个标题再人工挑……",
+          "comments": [
+            { "cid": "c1", "nickname": "追风少年", "content": "太实用了，已收藏", "digg": 120, "replyCount": 3, "createTime": 1710000100 },
+            { "cid": "c2", "nickname": "产品经理老李", "content": "第三个玩法试了下真的强", "digg": 88, "replyCount": 1, "createTime": 1710000200 }
+          ]
+        },
+        {
+          "awemeId": "7400000000000000002",
+          "title": "Kimi 新模型实测，长文档总结快到离谱",
+          "createTime": 1710100000,
+          "durationSec": 52,
+          "stats": { "digg": 1800, "comment": 95, "share": 40, "collect": 600, "play": 50000 },
+          "cover": null,
+          "transcriptText": "Kimi 更新了新模型，我用它总结了一份 200 页的报告……",
+          "comments": [
+            { "cid": "c3", "nickname": "AI 从业者", "content": "长文处理是真强", "digg": 45, "replyCount": 0, "createTime": 1710100100 }
+          ]
+        }
+      ]
+    },
+    {
+      "secUid": "MS4wLjABAAAA_ExampleUser2",
+      "nickname": "短视频起号实战",
+      "signature": "从 0 到 10 万粉的实操记录",
+      "avatar": null,
+      "followerCount": 54200,
+      "videos": [
+        {
+          "awemeId": "7400000000000000100",
+          "title": "新号第一条视频怎么拍才不会死",
+          "createTime": 1710200000,
+          "durationSec": 38,
+          "stats": { "digg": 2900, "comment": 150, "share": 30, "collect": 500, "play": 65000 },
+          "cover": null,
+          "transcriptText": "很多人新号第一条视频就被限流，这里分享三个避坑点……",
+          "comments": [
+            { "cid": "c4", "nickname": "新手小白", "content": "正好要起号，学到了", "digg": 60, "replyCount": 0, "createTime": 1710200100 }
+          ]
+        }
+      ]
+    }
+  ],
+  "scoutRuns": [
+    {
+      "domain": "AI 工具",
+      "keywords": ["AI 工具", "AI 工具 教程", "AI 工具 赚钱"],
+      "status": "done",
+      "createdAt": "2026-10-26 10:00:00",
+      "finishedAt": "2026-10-26 10:05:00",
+      "blogs": [
+        {
+          "secUid": "MS4wLjABAAAA_ExampleUser1",
+          "nickname": "AI 工具观察",
+          "followerCount": 128500,
+          "awemeCount": 320,
+          "videoSamples": 20,
+          "maxDigg": 100000,
+          "medianDigg": 3200,
+          "heatRatio": 12.5,
+          "freshDays": 0,
+          "score": 86,
+          "rating": "🚀 上升期黑马",
+          "aiAnalysis": "{\"rating\":\"上升期黑马\",\"score\":86,\"oneLine\":\"AI赛道高频稳定输出\"}"
+        }
+      ]
+    }
+  ],
+  "searchRuns": [
+    {
+      "keyword": "AI 做图",
+      "topn": 3,
+      "status": "done",
+      "videos": [
+        { "awemeId": "7400000000000000020", "title": "AI 做图赚钱新思路", "author": "设计喵", "digg": 5000, "commentCount": 300, "share": 120, "collect": 800, "rank": 1, "analyzed": 1 },
+        { "awemeId": "7400000000000000021", "title": "用 AI 一天产出 100 张商用图", "author": "电商老王", "digg": 4300, "commentCount": 260, "share": 90, "collect": 700, "rank": 2, "analyzed": 1 }
+      ]
+    }
+  ]
+}

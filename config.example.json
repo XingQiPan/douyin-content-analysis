@@ -1,0 +1,33 @@
+{
+  "llm": {
+    "providers": [
+      {
+        "id": "your-provider",
+        "baseUrl": "https://xingpan.site/v1",
+        "apiKey": "REPLACE_ME",
+        "enabled": true,
+        "models": {
+          "analysts": ["analyst-model-1", "analyst-model-2"],
+          "synthesizer": "synthesis-model",
+          "vision": "vision-model"
+        }
+      }
+    ]
+  },
+  "monitor": {
+    "cron": "0 9 * * *",
+    "topComments": 50,
+    "maxPagesPerBlogger": 2,
+    "maxVideosPerCheck": 10,
+    "transcribe": {
+      "model": "small",
+      "maxMinutes": 15
+    },
+    "keepVideoDays": 0
+  },
+  "web": {
+    "host": "127.0.0.1",
+    "port": 8421,
+    "password": ""
+  }
+}

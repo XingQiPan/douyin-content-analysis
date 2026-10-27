@@ -1,0 +1,22 @@
+{
+  "name": "douyin-content-analysis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "抖音博主内容数据监测与 AI 分析可视化框架（开源版）：导入采集好的数据，用多模型 AI 拆解、雷达评级、选题分析、日报/简报可视化",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "import": "node src/import.js",
+    "analyze": "node src/index.js analyze",
+    "report": "node src/index.js report",
+    "web": "node src/index.js web",
+    "daemon": "node src/index.js daemon",
+    "clean": "node scripts/clean.mjs"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "node-cron": "^4.1.0"
+  }
+}

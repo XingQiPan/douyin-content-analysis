@@ -1,0 +1,2110 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark light">
+<title>抖音博主监控台</title>
+<script src="/vendor/marked.min.js"></script>
+<script src="/vendor/echarts.min.js"></script>
+<style>
+  /* ============ Apple 风格设计系统 ============ */
+  :root[data-theme="dark"] {
+    --bg: #0b0b0f;
+    --bg-side: rgba(18,18,22,.6);
+    --header-bg: rgba(16,16,20,.72);
+    --card: rgba(28,28,32,.72);
+    --card-solid: #1c1c20;
+    --inset: rgba(120,120,128,.14);
+    --fill1: rgba(120,120,128,.18);
+    --fill2: rgba(120,120,128,.26);
+    --border: rgba(255,255,255,.08);
+    --hairline: rgba(255,255,255,.06);
+    --text: #f5f5f7;
+    --text2: #a1a1a8;
+    --text3: #66666e;
+    --accent: #0a84ff;
+    --accent-hover: #2f97ff;
+    --accent-soft: rgba(10,132,255,.16);
+    --green: #30d158; --green-soft: rgba(48,209,88,.16);
+    --red: #ff453a; --red-soft: rgba(255,69,58,.15);
+    --orange: #ff9f0a; --orange-soft: rgba(255,159,10,.16);
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    --shadow-big: 0 24px 80px rgba(0,0,0,.6);
+    --knob: #ffffff;
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f5f7;
+    --bg-side: rgba(245,245,247,.7);
+    --header-bg: rgba(251,251,253,.78);
+    --card: #ffffff;
+    --card-solid: #ffffff;
+    --inset: rgba(120,120,128,.08);
+    --fill1: rgba(120,120,128,.1);
+    --fill2: rgba(120,120,128,.16);
+    --border: rgba(0,0,0,.07);
+    --hairline: rgba(0,0,0,.05);
+    --text: #1d1d1f;
+    --text2: #6e6e73;
+    --text3: #aeaeb2;
+    --accent: #0071e3;
+    --accent-hover: #0077ed;
+    --accent-soft: rgba(0,113,227,.1);
+    --green: #34c759; --green-soft: rgba(52,199,89,.12);
+    --red: #ff3b30; --red-soft: rgba(255,59,48,.1);
+    --orange: #ff9500; --orange-soft: rgba(255,149,0,.12);
+    --shadow: 0 1px 1px rgba(0,0,0,.03), 0 4px 16px rgba(0,0,0,.05);
+    --shadow-big: 0 24px 80px rgba(0,0,0,.22);
+    --knob: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scrollbar-width: thin; scrollbar-color: var(--fill2) transparent; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background .35s ease, color .35s ease;
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--fill2); border-radius: 99px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::selection { background: var(--accent-soft); }
+
+  /* ============ 顶部导航（毛玻璃） ============ */
+  header {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 22px; height: 58px;
+    background: var(--header-bg);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; letter-spacing: .2px; }
+  .logo-mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: linear-gradient(135deg, #0a84ff, #5e5ce6);
+    box-shadow: 0 2px 8px rgba(10,132,255,.35);
+    display: grid; place-items: center; color: #fff; font-size: 13px;
+  }
+  .meta { flex: 1; text-align: center; color: var(--text3); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .icon-btn {
+    width: 32px; height: 32px; padding: 0; margin: 0; border-radius: 50%;
+    display: grid; place-items: center; font-size: 15px;
+    background: var(--fill1); border: none; cursor: pointer; transition: background .2s;
+  }
+  .icon-btn:hover { background: var(--fill2); }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 13px; border-radius: 99px; font-size: 12.5px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--card); cursor: default;
+    transition: border-color .2s, background .35s;
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); }
+  .chip.ok { border-color: transparent; background: var(--green-soft); color: var(--green); }
+  .chip.ok .dot { background: var(--green); box-shadow: 0 0 7px var(--green); }
+  .chip.no { border-color: transparent; background: var(--red-soft); color: var(--red); }
+  .chip.no .dot { background: var(--red); }
+  .chip.wait .dot { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+
+  /* ============ 布局：导航栏 + 视图 ============ */
+  .app { display: grid; grid-template-columns: 64px 1fr; min-height: calc(100vh - 58px); }
+  .view { display: grid; grid-template-columns: 312px 1fr; min-height: calc(100vh - 58px); }
+  .view.wide { grid-template-columns: 1fr; }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 64px 1fr; }
+    .view, .view.wide { grid-template-columns: 1fr; }
+    aside { border-right: none; border-bottom: 1px solid var(--border); max-height: none; position: static; }
+  }
+  .rail {
+    border-right: 1px solid var(--border); background: var(--bg-side);
+    display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0;
+    position: sticky; top: 58px; height: calc(100vh - 58px); backdrop-filter: blur(20px);
+  }
+  .rail-btn {
+    appearance: none; border: none; background: transparent; cursor: pointer;
+    width: 44px; height: 44px; padding: 0; margin: 0; border-radius: 12px; color: var(--text3);
+    display: grid; place-items: center; transition: background .2s, color .2s;
+  }
+  .rail-btn:hover { background: var(--fill1); color: var(--text); }
+  .rail-btn.active { background: var(--accent-soft); color: var(--accent); }
+  .rail-btn svg { width: 21px; height: 21px; }
+  aside {
+    border-right: 1px solid var(--border);
+    padding: 14px 12px; background: var(--bg-side);
+    display: flex; flex-direction: column; gap: 10px;
+    overflow-y: auto; max-height: calc(100vh - 58px);
+    position: sticky; top: 58px;
+    backdrop-filter: blur(20px);
+  }
+  main { padding: 18px 22px 36px; min-width: 0; }
+
+  /* ============ 卡片 ============ */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 15px;
+    box-shadow: var(--shadow);
+    transition: background .35s, border-color .2s, transform .15s;
+  }
+  .card h4 { font-size: 12.5px; font-weight: 600; color: var(--text2); margin-bottom: 10px; letter-spacing: .2px; }
+  .card.clickable { cursor: pointer; }
+  .card.clickable:hover { border-color: var(--fill2); }
+  .card.clickable.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  /* ============ 登录卡 ============ */
+  .login-card.ok { border-color: transparent; background: linear-gradient(180deg, var(--green-soft), var(--card) 60%); }
+  .login-card.no { border-color: transparent; background: linear-gradient(180deg, var(--red-soft), var(--card) 60%); }
+  .login-row { display: flex; align-items: center; gap: 12px; }
+  .login-row .txt { flex: 1; min-width: 0; }
+  .login-row .txt b { display: block; font-size: 14px; font-weight: 600; }
+  .login-row .txt span { font-size: 12px; color: var(--text2); }
+  .qr-wrap { text-align: center; margin-top: 14px; animation: fadeUp .3s ease; }
+  .qr-box { display: inline-block; padding: 9px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); }
+  .qr-box img { display: block; width: 168px; height: 168px; image-rendering: pixelated; }
+  .qr-hint { font-size: 12px; color: var(--text2); margin-top: 10px; line-height: 1.7; }
+  .qr-hint b { color: var(--accent); font-variant-numeric: tabular-nums; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } }
+
+  /* ============ 按钮（胶囊） ============ */
+  button {
+    appearance: none; border: 1px solid transparent; cursor: pointer;
+    border-radius: 980px; padding: 7px 16px;
+    font: 500 13px/1.4 inherit; font-family: inherit; color: var(--text);
+    background: var(--fill2);
+    transition: background .2s, color .2s, transform .1s, box-shadow .2s;
+  }
+  button:hover { background: var(--fill1); filter: brightness(1.08); }
+  button:active { transform: scale(.97); }
+  button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--accent-soft); }
+  button.primary { background: var(--accent); color: #fff; font-weight: 600; box-shadow: 0 1px 3px rgba(10,132,255,.35); }
+  button.primary:hover { background: var(--accent-hover); }
+  button.ghost { background: transparent; color: var(--text2); }
+  button.ghost:hover { background: var(--fill1); color: var(--text); }
+  button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+  .btn-sm { padding: 4px 12px; font-size: 12px; }
+
+  /* ============ 输入框 ============ */
+  input:not([type=checkbox]), select, textarea {
+    appearance: none; width: 100%;
+    background: var(--inset); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    padding: 8px 12px; font-size: 13px; font-family: inherit;
+    outline: none; transition: border-color .2s, box-shadow .2s, background .35s;
+  }
+  input:not([type=checkbox]):focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3.5px var(--accent-soft);
+    background: var(--card-solid);
+  }
+  input::placeholder { color: var(--text3); }
+  select { cursor: pointer; }
+
+  /* iOS 开关 */
+  input[type=checkbox] {
+    appearance: none; -webkit-appearance: none;
+    width: 42px; height: 26px; border-radius: 99px;
+    background: var(--fill2); position: relative; cursor: pointer;
+    transition: background .25s; flex-shrink: 0;
+  }
+  input[type=checkbox]::before {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 22px; height: 22px; border-radius: 50%; background: var(--knob);
+    box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    transition: transform .25s cubic-bezier(.3,.9,.4,1.1);
+  }
+  input[type=checkbox]:checked { background: var(--green); }
+  input[type=checkbox]:checked::before { transform: translateX(16px); }
+
+  /* ============ 博主卡 ============ */
+  .b-head { display: flex; align-items: center; gap: 11px; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--fill2), var(--inset));
+    display: grid; place-items: center; font-weight: 600; font-size: 15px; color: var(--text2);
+    overflow: hidden; flex-shrink: 0; box-shadow: inset 0 0 0 1px var(--border);
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .b-name { font-weight: 600; font-size: 14.5px; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .b-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .b-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .b-actions { display: flex; gap: 7px; margin-top: 12px; }
+  .badge-err { color: var(--red); cursor: help; }
+  .spin { display: inline-block; animation: r 1s linear infinite; }
+  @keyframes r { to { transform: rotate(360deg); } }
+
+  /* ============ 分段控件（Tabs） ============ */
+  .tabs { display: inline-flex; gap: 2px; padding: 2.5px; background: var(--fill1); border-radius: 11px; margin-bottom: 20px; }
+  .tab {
+    padding: 6.5px 18px; border-radius: 8.5px; cursor: pointer;
+    color: var(--text2); font-size: 13px; font-weight: 500;
+    transition: all .2s; user-select: none; white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--card-solid); color: var(--text); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+  .tab .n { font-size: 11px; color: var(--text3); margin-left: 4px; font-weight: 400; }
+  @media (max-width: 700px) { .tabs { display: flex; overflow-x: auto; } }
+
+  /* ============ 表格 ============ */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 8px 12px; font-size: 11.5px; font-weight: 600; color: var(--text3); letter-spacing: .02em; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--hairline); font-size: 13px; vertical-align: middle; }
+  tbody tr { transition: background .15s; }
+  tr.click { cursor: pointer; }
+  tr.click:hover td { background: var(--fill1); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .cover-thumb { width: 42px; height: 56px; border-radius: 8px; object-fit: cover; background: var(--inset); display: block; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+  .vtitle { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; font-weight: 500; }
+
+  .pill { display: inline-flex; align-items: center; padding: 2.5px 10px; border-radius: 99px; font-size: 11.5px; font-weight: 500; }
+  .pill.ok { background: var(--green-soft); color: var(--green); }
+  .pill.warn { background: var(--orange-soft); color: var(--orange); }
+  .pill.err { background: var(--red-soft); color: var(--red); }
+  .pill.wait { background: var(--fill1); color: var(--text2); }
+
+  /* ============ 详情弹窗 ============ */
+  .modal-wrap {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(0,0,0,.4);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    overflow-y: auto; padding: 40px 16px;
+    animation: fadeIn .22s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } }
+  .modal {
+    max-width: 920px; margin: 0 auto;
+    background: var(--card-solid); border: 1px solid var(--border);
+    border-radius: 22px; padding: 26px; box-shadow: var(--shadow-big);
+    animation: pop .28s cubic-bezier(.2,.9,.35,1.05);
+  }
+  @keyframes pop { from { opacity: 0; transform: scale(.96) translateY(10px); } }
+  .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+  .modal-head h2 { flex: 1; font-size: 18px; font-weight: 700; letter-spacing: .1px; }
+
+  .stats-row { display: flex; gap: 7px; margin: 12px 0 14px; flex-wrap: wrap; }
+  .stats-row .s {
+    flex: 1; min-width: 86px; padding: 10px 6px; text-align: center;
+    background: var(--inset); border-radius: 12px;
+  }
+  .stats-row .s b { display: block; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stats-row .s span { font-size: 11px; color: var(--text3); }
+  .cover-banner { position: relative; height: 200px; border-radius: 16px; overflow: hidden; margin-bottom: 16px; background: var(--inset); }
+  .cover-banner img { width: 100%; height: 100%; object-fit: cover; }
+  .cover-banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.45)); }
+
+  .section { margin: 18px 0; }
+  .section > h3 {
+    font-size: 13px; font-weight: 600; color: var(--text2);
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px; letter-spacing: .3px;
+  }
+  .section > h3::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .comment { display: flex; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--hairline); align-items: flex-start; border-radius: 8px; transition: background .15s; }
+  .comment:hover { background: var(--fill1); }
+  .comment .rank { color: var(--text3); min-width: 22px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 2px; }
+  .comment .dig { color: var(--orange); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; padding-top: 2px; }
+  .comment .nick { color: var(--text3); font-size: 12px; }
+  .cbody { flex: 1; min-width: 0; }
+
+  details { border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin: 10px 0; background: var(--inset); transition: background .2s; }
+  details:hover { background: var(--fill1); }
+  summary { cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 500; }
+  summary b { color: var(--text); }
+
+  /* ============ Markdown ============ */
+  .md { max-width: 880px; }
+  .md h1 { font-size: 20px; font-weight: 700; margin: 16px 0 10px; letter-spacing: .1px; }
+  .md h2 { font-size: 16px; font-weight: 650; margin: 18px 0 8px; }
+  .md h3 { font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+  .md p, .md li { font-size: 13.5px; }
+  .md code { background: var(--fill1); padding: 1.5px 6px; border-radius: 5px; font-size: 12px; font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+  .md pre { background: var(--inset); padding: 14px; border-radius: 10px; overflow-x: auto; font-size: 12px; border: 1px solid var(--hairline); }
+  .md blockquote { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--text2); margin: 8px 0; }
+  .md table { margin: 10px 0; }
+  .md a { color: var(--accent); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ============ 日志 ============ */
+  .log {
+    background: var(--inset); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; font: 12px/1.8 ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+    white-space: pre-wrap; max-height: calc(100vh - 200px); overflow-y: auto; color: var(--text2);
+  }
+
+  /* ============ 设置 ============ */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-grid label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 500; color: var(--text2); }
+  .provider-box { border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; background: var(--inset); transition: border-color .2s; }
+  .provider-box:hover { border-color: var(--fill2); }
+  .switch-row { display: flex; gap: 10px; align-items: center; font-size: 12.5px; color: var(--text2); cursor: pointer; }
+  #modelList .pill { margin: 2px 3px 2px 0; cursor: pointer; }
+  #modelList .pill:hover { background: var(--accent-soft); color: var(--accent); }
+
+  /* ============ 其他 ============ */
+  .toast {
+    position: fixed; bottom: 26px; right: 26px; z-index: 99;
+    background: var(--header-bg); backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: 14px;
+    padding: 12px 20px; max-width: 400px; font-size: 13px;
+    box-shadow: var(--shadow-big); display: none;
+    animation: fadeUp .25s ease;
+  }
+  .empty { color: var(--text3); text-align: center; padding: 56px 0; font-size: 13.5px; }
+  .empty .big { font-size: 36px; display: block; margin-bottom: 12px; opacity: .8; }
+  .transcript { max-height: 320px; overflow-y: auto; background: var(--inset); padding: 14px 16px; border-radius: 12px; font-size: 13px; line-height: 2; border: 1px solid var(--hairline); }
+
+  /* ============ 视频分屏 ============ */
+  .split { display: grid; grid-template-columns: minmax(340px, 440px) 1fr; gap: 14px; align-items: start; }
+  @media (max-width: 1080px) { .split { grid-template-columns: 1fr; } .detail-pane { position: static; max-height: none; } }
+  .vlist { padding: 6px; max-height: calc(100vh - 150px); overflow-y: auto; }
+  .vrow { display: flex; gap: 11px; padding: 9px 10px; border-radius: 12px; cursor: pointer; transition: background .15s, border-color .15s; border: 1px solid transparent; }
+  .vrow:hover { background: var(--fill1); }
+  .vrow.active { background: var(--accent-soft); border-color: var(--accent); }
+  .vrow img.cover { width: 44px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--inset); }
+  .vrow .vinfo { flex: 1; min-width: 0; }
+  .vrow .vt { font-size: 12.5px; font-weight: 500; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .vrow .vm { font-size: 11px; color: var(--text3); margin-top: 4px; display: flex; gap: 9px; align-items: center; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+  .vrow .vm .st { margin-left: auto; }
+  .btn-analyze { padding: 2px 10px; font-size: 11px; border-radius: 99px; }
+  .detail-pane {
+    position: sticky; top: 74px;
+    max-height: calc(100vh - 90px); overflow-y: auto;
+  }
+  .detail-inner { padding: 18px 20px; }
+  .detail-head2 { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+  .detail-head2 h2 { font-size: 17px; font-weight: 700; line-height: 1.5; flex: 1; }
+  .player-row { display: flex; gap: 16px; margin-bottom: 14px; align-items: stretch; flex-wrap: wrap; }
+  video.player { width: 280px; flex-shrink: 0; border-radius: 14px; background: #000; aspect-ratio: 9/13; object-fit: contain; }
+  .player-side { flex: 1; min-width: 240px; display: flex; flex-direction: column; }
+  .player-side .stats-row { margin: 0 0 12px; flex: 1; align-content: start; }
+  .player-side .dl-box { flex: 1; margin-bottom: 0; }
+  .dl-box {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px;
+    background: var(--inset); border-radius: 14px;
+    border: 1px dashed var(--border); text-align: center;
+  }
+
+  /* ============ 顶栏任务面板 ============ */
+  .jobs-badge {
+    position: absolute; top: -3px; right: -3px; min-width: 16px; height: 16px;
+    border-radius: 99px; background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;
+    padding: 0 4px; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  }
+  #jobsPanel {
+    position: fixed; top: 64px; right: 16px; z-index: 90;
+    width: 520px; max-height: 70vh; overflow-y: auto;
+    background: var(--header-bg); backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--border); border-radius: 16px;
+    box-shadow: var(--shadow-big); padding: 14px;
+    animation: pop .22s cubic-bezier(.2,.9,.35,1.05);
+  }
+  #jobsPanel .jp-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  #jobsPanel .jp-title b { font-size: 14px; }
+  #jobsPanel .job-running, #jobsPanel .jr-queue, #jobsPanel .jr-recent { background: var(--inset); }
+  @media (max-width: 640px) { #jobsPanel { width: calc(100vw - 24px); right: 12px; } }
+
+  /* ============ 仪表盘 ============ */
+  .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 640px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px; }
+  .kpi b { font-size: 20px; font-weight: 700; letter-spacing: .2px; font-variant-numeric: tabular-nums; }
+  .kpi .l { font-size: 11.5px; color: var(--text2); font-weight: 500; }
+  .kpi .s { font-size: 11px; color: var(--text3); }
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 1100px) { .dash-grid { grid-template-columns: 1fr; } }
+  .dash-grid .card h4 { margin-bottom: 8px; }
+  .kw { background: var(--fill1); color: var(--text); padding: 4px 13px; border-radius: 99px; font-weight: 500; line-height: 1.5; }
+
+  /* ============ 日报分屏 ============ */
+  .rdate {
+    width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
+    background: var(--accent-soft); color: var(--accent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; line-height: 1.15; font-variant-numeric: tabular-nums;
+  }
+  .rdate small { font-weight: 500; font-size: 10px; opacity: .75; }
+  .report-md { max-width: 800px; }
+  .report-md h1 { font-size: 21px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .report-md h2 { margin-top: 26px; padding-top: 4px; }
+  .report-md hr { border: none; border-top: 1px solid var(--hairline); margin: 26px 0; }
+  .report-md ul { padding-left: 22px; }
+  .report-md li { margin: 4px 0; }
+  .report-md blockquote { background: var(--inset); border-radius: 8px; padding: 8px 14px; }
+
+  /* ============ 任务中心 ============ */
+  .jobs-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .jobs-head h4 { margin-bottom: 0; }
+  .jobs-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .job-running { background: var(--inset); border-radius: 12px; padding: 12px 14px; margin: 8px 0; }
+  .jr-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .jr-top b { font-size: 13.5px; font-weight: 600; }
+  .jr-eta { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bar { height: 6px; background: var(--fill1); border-radius: 99px; overflow: hidden; margin: 10px 0 8px; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-hover)); border-radius: 99px; transition: width .6s ease; }
+  .bar-fill.indet { animation: indet 1.4s ease-in-out infinite; }
+  @keyframes indet { 0% { opacity: .5; } 50% { opacity: 1; } 100% { opacity: .5; } }
+  .jr-sub { font-size: 12px; color: var(--text2); }
+  .jr-queue { font-size: 12px; color: var(--text2); padding: 8px 14px; background: var(--inset); border-radius: 12px; margin: 6px 0; line-height: 1.9; }
+  .jr-recent { margin-top: 10px; border-top: 1px solid var(--hairline); padding-top: 8px; }
+  .jr-row { display: flex; align-items: center; gap: 10px; font-size: 12px; padding: 5px 2px; color: var(--text2); }
+  .jr-row .pill { flex-shrink: 0; }
+
+  /* ============ 选题分析 ============ */
+  #searchRunsBox, #scoutRunsBox { display: flex; flex-direction: column; gap: 6px; }
+  #bloggerList { display: flex; flex-direction: column; gap: 10px; }
+  .runchip {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 10px; border-radius: 9px; cursor: pointer;
+    background: var(--inset); border: 1px solid transparent;
+    font-size: 12.5px; font-weight: 500; transition: all .15s;
+    max-width: 100%; overflow: hidden;
+  }
+  .runchip:hover { background: var(--fill1); }
+  .runchip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .runchip.error span:first-child { color: var(--red); }
+  .chip-del {
+    width: 17px; height: 17px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center;
+    font-size: 12px; line-height: 1; color: var(--text3);
+    cursor: pointer; transition: all .15s; opacity: .45;
+  }
+  .runchip:hover .chip-del { opacity: 1; }
+  .chip-del:hover { background: var(--red-soft); color: var(--red); }
+  .rank-badge {
+    width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), #5e5ce6); color: #fff;
+    display: grid; place-items: center; font-size: 12px; font-weight: 700;
+  }
+  .report-btn {
+    width: 100%; margin-top: 10px; padding: 9px;
+    background: var(--accent-soft); color: var(--accent);
+    border: 1px solid transparent; border-radius: 10px;
+    font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background .2s;
+  }
+  .report-btn:hover { background: var(--fill2); }
+
+  /* ============ 博主雷达 ============ */
+  .scout-row {
+    display: flex; gap: 13px; align-items: flex-start;
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 10px; transition: border-color .15s;
+  }
+  .scout-row:hover { border-color: var(--fill2); }
+  .scout-row.monitored { opacity: .65; }
+  .scout-row .avatar { width: 44px; height: 44px; }
+  .scout-row .score {
+    margin-left: auto; font-size: 13px; font-weight: 700; color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .scout-why { font-size: 12px; color: var(--text2); margin-top: 5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span class="logo-mark">▶</span>抖音博主监控台</div>
+  <div class="meta" id="meta"></div>
+  <div class="header-right">
+    <button class="icon-btn" id="jobsBtn" onclick="toggleJobsPanel(event)" title="任务队列" style="position:relative">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>
+      <span class="jobs-badge" id="jobsBadge" style="display:none">0</span>
+    </button>
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="切换深浅色外观"></button>
+    <div class="chip wait" id="authChip"><span class="dot"></span><span id="authText">检测登录态…</span></div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- 一级导航栏 -->
+  <nav class="rail">
+    <button class="rail-btn active" id="railMonitor" onclick="switchView('monitor')" title="监控博主">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="12" r="3.2"/><path d="M12 8.8v.2M12 15v.2M8.8 12h.2M15 12h.2"/></svg>
+    </button>
+    <button class="rail-btn" id="railScout" onclick="switchView('scout')" title="博主雷达">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+    </button>
+    <button class="rail-btn" id="railSearch" onclick="switchView('search')" title="选题分析">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/><path d="M11 8v6M8 11h6"/></svg>
+    </button>
+    <button class="rail-btn" id="railLogs" onclick="switchView('logs')" title="运行日志">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+    </button>
+    <button class="rail-btn" id="railBriefing" onclick="switchView('briefing')" title="每日简报">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    </button>
+    <button class="rail-btn" id="railCreation" onclick="switchView('creation')" title="创作工作台">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+    </button>
+    <button class="rail-btn" id="railCompetitors" onclick="switchView('competitors')" title="竞品监控">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </button>
+    <button class="rail-btn" id="railSettings" onclick="switchView('settings')" title="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </nav>
+
+  <!-- 监控视图 -->
+  <div id="viewMonitor" class="view">
+    <aside id="monitorAside">
+      <div class="card login-card" id="loginCard">
+      <h4>🔐 抖音登录</h4>
+      <div class="login-row">
+        <div class="txt">
+          <b id="loginTitle">检测中…</b>
+          <span id="loginSub">投稿列表与评论需要登录态</span>
+        </div>
+        <button class="primary btn-sm" id="loginBtn" onclick="startLogin()">扫码登录</button>
+      </div>
+      <div class="qr-wrap" id="qrWrap" style="display:none">
+        <div class="qr-box"><img id="qrImg" alt="二维码加载中..."></div>
+        <div class="qr-hint">手机抖音扫一扫，二维码每分钟自动刷新<br>有效期 <b id="qrCount">5:00</b> · 无需操作浏览器窗口</div>
+        <button class="ghost btn-sm" style="margin-top:10px" onclick="cancelLogin()">取消</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>➕ 添加监控博主</h4>
+      <input id="addInput" placeholder="粘贴博主主页链接或 sec_uid">
+      <button class="primary" style="width:100%;margin-top:10px" onclick="addBlogger()">添加监控</button>
+    </div>
+
+    <div id="bloggerList"></div>
+  </aside>
+
+  <main>
+    <div class="tabs">
+      <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">总览</div>
+      <div class="tab" data-tab="videos" onclick="switchTab('videos')">视频<span class="n" id="nVideos"></span></div>
+      <div class="tab" data-tab="reports" onclick="switchTab('reports')">日报<span class="n" id="nReports"></span></div>
+    </div>
+    <div id="tab-dashboard">
+      <div class="card" id="jobsCard" style="margin-bottom:14px"></div>
+      <div id="dashBox"><div class="empty"><span class="big">◎</span>从左侧选择一个博主，查看数据仪表盘</div></div>
+    </div>
+    <div id="tab-videos" style="display:none">
+      <div class="split">
+        <div class="card vlist" id="videoList"><div class="empty">从左侧选择一个博主</div></div>
+        <div class="detail-pane" id="videoDetail"><div class="card detail-inner"><div class="empty"><span class="big">☰</span>在左侧列表中选择视频<br>右侧将展示完整分析报告、评论与转写稿</div></div></div>
+      </div>
+    </div>
+    <div id="tab-reports" style="display:none"><div class="empty"><span class="big">▢</span>从左侧选择一个博主，查看分析日报</div></div>
+  </main>
+  </div>
+
+  <!-- 博主雷达视图 -->
+  <div id="viewScout" class="view" style="display:none">
+    <aside>
+      <div class="card">
+        <h4>📡 博主雷达 · 定领域找潜力博主</h4>
+        <input id="scoutDomain" placeholder="输入领域，如：AI副业 / 健身 / 母婴">
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <select id="scoutLimit" style="flex:1">
+            <option value="10">扫描 10 位</option>
+            <option value="20" selected>扫描 20 位</option>
+            <option value="30">扫描 30 位</option>
+          </select>
+          <button class="primary" onclick="startScout()">开始扫描</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.7">多关键词变体搜索领域爆款 → 提取作者 → 拉主页数据 → 算赞粉比/涨粉率 → AI 评级「潜力新星 / 上升期黑马 / 成熟大号」</div>
+      </div>
+      <div class="card" id="scoutJobCard" style="display:none"></div>
+      <div class="card">
+        <h4>历史扫描</h4>
+        <div id="scoutRunsBox"><div class="empty" style="padding:14px 0">还没有扫描记录</div></div>
+      </div>
+    </aside>
+    <main>
+      <div class="card" style="margin-bottom:14px"><h4 style="margin-bottom:6px">🫧 赛道散点 · 粉丝 × 赞粉比 × 互动规模</h4><div id="cScatter" style="height:340px"></div></div>
+      <div id="scoutList"><div class="empty"><span class="big">◎</span>开始一次扫描，或在左侧选择历史扫描</div></div>
+    </main>
+  </div>
+
+  <!-- 选题分析视图 -->
+  <div id="viewSearch" class="view" style="display:none">
+    <aside>
+      <div class="card">
+        <h4>🔍 搜索爆款</h4>
+        <input id="searchKw" placeholder="输入关键词，如：AI 提示词">
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <select id="searchTopN" style="flex:1">
+            <option value="3">分析 TOP 3</option>
+            <option value="5" selected>分析 TOP 5</option>
+            <option value="8">分析 TOP 8</option>
+            <option value="10">分析 TOP 10</option>
+          </select>
+          <button class="primary" onclick="startSearchAnalyze()">搜索分析</button>
+        </div>
+        <button class="ghost btn-sm" style="width:100%;margin-top:8px" onclick="startSearchAnalyze(true)">仅搜索列表（不自动分析）</button>
+      </div>
+      <div class="card" id="searchJobCard" style="display:none"></div>
+      <div class="card">
+        <h4>历史搜索</h4>
+        <div id="searchRunsBox"><div class="empty" style="padding:14px 0">还没有搜索记录</div></div>
+      </div>
+    </aside>
+    <main>
+      <div class="split">
+        <div class="card vlist" id="svList"><div class="empty"><span class="big">🔍</span>输入关键词搜索<br>抖音搜到的视频会全部列在这里</div></div>
+        <div class="detail-pane" id="searchDetail"><div class="card detail-inner"><div class="empty"><span class="big">☰</span>点击左侧视频查看完整拆解<br>或点「深度分析」逐条跑流水线</div></div></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 每日简报视图 -->
+  <div id="viewBriefing" class="view" style="display:none">
+    <aside>
+      <div class="card">
+        <h4>📰 每日简报</h4>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px">每日 9 点自动生成赛道简报</div>
+        <button class="primary" style="width:100%" onclick="generateBriefing()">立即生成今日简报</button>
+      </div>
+      <div class="card">
+        <h4>历史简报</h4>
+        <div id="briefingList"><div class="empty" style="padding:14px 0">加载中...</div></div>
+      </div>
+    </aside>
+    <main>
+      <div id="briefingContent"><div class="empty"><span class="big"></span>选择左侧简报查看</div></div>
+    </main>
+  </div>
+
+  <!-- 创作工作台视图 -->
+  <div id="viewCreation" class="view" style="display:none">
+    <aside>
+      <div class="card">
+        <h4>✍️ 选题策划</h4>
+        <input id="creationTopic" placeholder="输入创作主题，如：AI 副业怎么做">
+        <div style="margin-top:10px">
+          <label style="font-size:12px;color:var(--text2)">额外参考（可选，每行一条）：</label>
+          <textarea id="creationRefs" rows="4" placeholder="粘贴参考链接或观点..." style="width:100%;margin-top:6px"></textarea>
+        </div>
+        <button class="primary" style="width:100%;margin-top:10px" onclick="runCreationPlan()">生成策划方案</button>
+      </div>
+      <div class="card" id="creationJobCard" style="display:none"></div>
+    </aside>
+    <main>
+      <div id="creationResult"><div class="empty"><span class="big">✍️</span>输入主题开始策划</div></div>
+    </main>
+  </div>
+
+  <!-- 竞品监控视图 -->
+  <div id="viewCompetitors" class="view" style="display:none">
+    <aside>
+      <div class="card">
+        <h4> 竞品监控</h4>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px">轻量模式：只抓元数据，不下载/转写/分析</div>
+        <button class="primary" style="width:100%" onclick="showAddCompetitor()">+ 添加竞品博主</button>
+      </div>
+      <div class="card">
+        <h4>预警记录</h4>
+        <div id="competitorAlerts"><div class="empty" style="padding:14px 0">暂无预警</div></div>
+      </div>
+    </aside>
+    <main>
+      <div id="competitorList"><div class="empty"><span class="big"></span>添加竞品博主开始监控</div></div>
+    </main>
+  </div>
+
+  <!-- 日志 / 设置视图（全宽） -->
+  <div id="viewLogs" class="view wide" style="display:none">
+    <main style="width:100%"><div class="log" id="logBox">加载中...</div></main>
+  </div>
+  <div id="viewSettings" class="view wide" style="display:none">
+    <main style="width:100%"><div id="settingsBox">加载中...</div></main>
+  </div>
+</div>
+
+<div id="jobsPanel" style="display:none"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let bloggers = [], currentBlogger = null, currentTab = 'dashboard';
+let prevChecking = {}, loginPolling = false;
+let dashCharts = [], currentVideo = null, videoCache = [];
+
+/* ============ 主题（SVG 图标） ============ */
+const ICON_MOON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const ICON_SUN = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+function applyThemeIcon() { $('#themeBtn').innerHTML = document.documentElement.dataset.theme === 'dark' ? ICON_MOON : ICON_SUN; }
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('dm-theme', next);
+  applyThemeIcon();
+  if (currentTab === 'dashboard' && currentBlogger) loadDashboard(currentBlogger);
+}
+(function initTheme() {
+  const saved = localStorage.getItem('dm-theme');
+  const theme = saved || 'dark';
+  document.documentElement.dataset.theme = theme;
+  document.addEventListener('DOMContentLoaded', applyThemeIcon);
+})();
+
+function toast(msg, ms = 3000) {
+  const t = $('#toast'); t.innerHTML = msg; t.style.display = 'block';
+  clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', ms);
+}
+async function api(path, opts) {
+  const r = await fetch(path, opts && { headers: { 'Content-Type': 'application/json' }, ...opts });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+const fmt = (n) => n == null ? '–' : n >= 10000 ? (n / 10000).toFixed(1) + 'w' : String(n);
+const ts = (u) => u ? new Date(u * 1000).toLocaleString('zh-CN', { hour12: false }) : '–';
+const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const imgTag = (src, cls, alt) => src ? `<img src="${escapeHtml(src)}" class="${cls}" alt="${alt || ''}" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display='none'">` : '';
+function relTime(str) {
+  if (!str) return '从未';
+  const d = (Date.now() - new Date(str.replace(' ', 'T'))) / 1000;
+  if (isNaN(d)) return str;
+  if (d < 90) return '刚刚';
+  if (d < 3600) return Math.round(d / 60) + ' 分钟前';
+  if (d < 86400) return Math.round(d / 3600) + ' 小时前';
+  return Math.round(d / 86400) + ' 天前';
+}
+
+/* ============ 登录（开源版无采集，登录不可用，仅展示提示） ============ */
+async function pollAuth() {
+  let auth;
+  try { auth = await api('/api/auth/status'); } catch { auth = { loggedIn: false }; }
+  renderAuth(auth);
+}
+function renderAuth(auth) {
+  const ok = auth?.loggedIn;
+  const chip = $('#authChip'), card = $('#loginCard'), btn = $('#loginBtn');
+  if (loginPolling) return;
+  chip.className = 'chip ' + (ok ? 'ok' : 'no');
+  $('#authText').textContent = auth?.message ? '无需登录' : (ok ? '已登录' : '未登录');
+  card.classList.toggle('ok', !!ok);
+  card.classList.toggle('no', !ok);
+  $('#loginTitle').textContent = ok ? '✓ 登录态正常' : (auth?.message ? '开源版无需登录' : '未登录');
+  $('#loginSub').textContent = ok ? '可以执行检查与抓取评论' : (auth?.message || '扫码后即可抓取投稿与评论');
+  btn.disabled = !!auth?.message;
+  btn.textContent = ok ? '重新扫码' : (auth?.message ? '导入模式' : '扫码登录');
+}
+async function startLogin() {
+  if ($('#loginBtn').disabled) { toast('开源版不含采集能力，无需登录。请用 npm run import 导入数据。', 6000); return; }
+  loginPolling = true;
+  $('#loginBtn').disabled = true;
+  $('#loginBtn').textContent = '登录中…';
+  $('#qrWrap').style.display = 'block';
+  $('#qrImg').src = '';
+  let lastQr = null, t0 = Date.now();
+  try { await api('/api/login/start', { method: 'POST', body: '{}' }); }
+  catch (e) { /* 已有会话进行中，直接接管轮询 */ }
+  const timer = setInterval(async () => {
+    let s;
+    try { s = await api('/api/login/status'); } catch { return; }
+    if (s.startedAt) t0 = s.startedAt;
+    if (s.qrDataUrl && s.qrDataUrl !== lastQr) { lastQr = s.qrDataUrl; $('#qrImg').src = lastQr; }
+    $('#loginTitle').textContent = s.running ? '等待扫码…' : (s.loggedIn ? '✓ 登录成功' : '登录未完成');
+    $('#loginSub').textContent = s.error || (s.running ? '手机抖音扫下方二维码即可' : '可重新发起扫码');
+    const left = Math.max(0, 300 - Math.floor((Date.now() - t0) / 1000));
+    $('#qrCount').textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+    if (!s.running) {
+      clearInterval(timer);
+      loginPolling = false;
+      $('#loginBtn').disabled = false;
+      $('#loginBtn').textContent = '扫码登录';
+      setTimeout(() => { $('#qrWrap').style.display = 'none'; }, s.loggedIn ? 1500 : 0);
+      if (s.loggedIn) { toast('登录成功！现在可以点博主卡片上的「立即检查」了'); pollAuth(); }
+      else if (s.error) toast('⚠️ ' + s.error, 5000);
+    }
+  }, 1000);
+}
+async function cancelLogin() {
+  await api('/api/login/cancel', { method: 'POST', body: '{}' }).catch(() => {});
+  toast('已取消登录');
+}
+
+/* ============ 配置 / 博主 ============ */
+async function loadMeta() {
+  try {
+    const m = await api('/api/config-meta');
+    $('#meta').textContent = `每天 ${m.cron} 自动检查 ｜ 分析 ${m.analysts.join(' · ')}${m.synthesizer.length ? ' ｜ 综合 ' + m.synthesizer.join(' · ') : ''}`;
+  } catch {}
+}
+async function loadBloggers() {
+  bloggers = await api('/api/bloggers');
+  $('#bloggerList').innerHTML = bloggers.map((b) => `
+    <div class="card clickable ${currentBlogger === b.id ? 'active' : ''}" onclick="selectBlogger(${b.id})">
+      <div class="b-head">
+        <div class="avatar">${b.avatar ? imgTag(b.avatar, '', '') : escapeHtml((b.nickname || '?')[0])}</div>
+        <div style="min-width:0;flex:1">
+          <div class="b-name">${b.enabled ? '' : '⏸ '}${b.checking ? '<span class="spin">◔</span> ' : ''}<span>${escapeHtml(b.nickname || b.sec_uid.slice(0, 12) + '…')}</span>${b.last_error ? `<span class="badge-err" title="${escapeHtml(b.last_error)}">!</span>` : ''}</div>
+          <div class="b-sub">${fmt(b.follower_count)} 粉丝 · ${b.video_count} 视频 · ${b.checking ? '检查中' : relTime(b.last_checked_at)}</div>
+        </div>
+      </div>
+      <div class="b-actions">
+        <button class="primary btn-sm" ${b.checking ? 'disabled' : ''} onclick="event.stopPropagation(); checkNow(${b.id})">${b.checking ? '检查中…' : '立即检查'}</button>
+        <button class="btn-sm" onclick="event.stopPropagation(); toggleBlogger(${b.id})">${b.enabled ? '停用' : '启用'}</button>
+        <button class="ghost btn-sm" onclick="event.stopPropagation(); delBlogger(${b.id})">删除</button>
+      </div>
+    </div>`).join('') || '<div class="empty" style="padding:26px 0">还没有监控博主</div>';
+  for (const b of bloggers) {
+    if (prevChecking[b.id] && !b.checking && currentBlogger === b.id) {
+      if (currentTab === 'videos') loadVideos(b.id);
+      if (currentTab === 'dashboard') loadDashboard(b.id);
+    }
+    prevChecking[b.id] = b.checking;
+  }
+}
+async function addBlogger() {
+  const input = $('#addInput');
+  if (!input.value.trim()) return;
+  try {
+    await api('/api/bloggers', { method: 'POST', body: JSON.stringify({ url: input.value }) });
+    input.value = ''; toast('已添加，点「立即检查」开始抓取'); loadBloggers();
+  } catch (e) { toast('❌ ' + e.message); }
+}
+async function toggleBlogger(id) { await api(`/api/bloggers/${id}/toggle`, { method: 'POST', body: '{}' }); loadBloggers(); }
+async function delBlogger(id) {
+  const b = bloggers.find((x) => x.id === id);
+  if (!confirm(`确定删除「${b?.nickname || id}」吗？\n\n将同时删除：${b?.video_count || 0} 条视频记录、全部评论/分析/日报、已下载的视频与转写稿文件。\n此操作不可恢复。`)) return;
+  try {
+    const r = await fetch(`/api/bloggers/${id}`, { method: 'DELETE' });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || r.statusText);
+    toast(`已删除（${j.videoCount} 条视频，释放 ${j.freedMB ?? 0}MB）`);
+    if (currentBlogger === id) { currentBlogger = null; $('#tab-dashboard').innerHTML = '<div class="empty"><span class="big">◎</span>从左侧选择一个博主</div>'; }
+    loadBloggers();
+  } catch (e) { toast('❌ ' + e.message); }
+}
+async function checkNow(id) {
+  try {
+    await api(`/api/bloggers/${id}/check`, { method: 'POST', body: '{}' });
+    toast('检查已启动：抓投稿 → 下载 → 转写 → 评论 → 分析，需要几分钟');
+    loadBloggers();
+  } catch (e) { toast('❌ ' + e.message); }
+}
+
+/* ============ 标签页 ============ */
+/* ============ 一级导航 ============ */
+let currentView = 'monitor';
+function switchView(v) {
+  currentView = v;
+  for (const name of ['monitor', 'scout', 'search', 'competitors', 'logs', 'settings']) {
+    const el = $('#view' + name[0].toUpperCase() + name.slice(1));
+    if (el) el.style.display = name === v ? '' : 'none';
+    const btn = $('#rail' + name[0].toUpperCase() + name.slice(1));
+    if (btn) btn.classList.toggle('active', name === v);
+  }
+  if (v === 'logs') refreshLogs();
+  if (v === 'settings') loadSettings().catch((e) => toast('设置加载失败: ' + e.message));
+  if (v === 'search') loadSearchTab();
+  if (v === 'scout') loadScoutTab();
+  if (v === 'competitors') loadCompetitorsTab();
+  if (v === 'creation') loadCreationTab();
+  if (v === 'briefing') loadBriefingTab();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('#viewMonitor .tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === tab));
+  for (const t of ['dashboard', 'videos', 'reports']) $('#tab-' + t).style.display = t === tab ? '' : 'none';
+  if (tab === 'dashboard' && currentBlogger) loadDashboard(currentBlogger);
+  if (tab === 'videos' && currentBlogger) loadVideos(currentBlogger);
+  if (tab === 'reports' && currentBlogger) loadReports(currentBlogger);
+}
+
+/* ============ 博主雷达 ============ */
+let currentScout = null, scoutScatter = null, scoutPollTimer = null, currentScoutBlogs = [];
+async function loadScoutTab() {
+  await refreshScoutRuns();
+  if (!scoutPollTimer) scoutPollTimer = setInterval(pollScoutJob, 3000);
+}
+async function pollScoutJob() {
+  if (currentView !== 'scout') return;
+  let data;
+  try { data = await api('/api/scout/runs'); } catch { return; }
+  renderScoutJob(data.activeJob);
+  if (data.activeJob) {
+    data.activeJob.queuePos = undefined;
+  } else if (scoutHadActive) { scoutHadActive = false; await refreshScoutRuns(); }
+  if (data.activeJob) scoutHadActive = true;
+}
+let scoutHadActive = false;
+function renderScoutJob(job) {
+  const card = $('#scoutJobCard');
+  if (!card) return;
+  if (!job) { card.style.display = 'none'; card.innerHTML = ''; return; }
+  card.style.display = '';
+  const pct = job.total ? Math.round((job.current / job.total) * 100) : null;
+  card.innerHTML = `
+    <div class="jr-top"><b>${job.status === 'queued' ? '⏳ 排队中' : '📡 ' + escapeHtml(job.stage || '扫描中')}</b>${job.etaSec != null ? `<span class="jr-eta">剩余 ${fmtEta(job.etaSec)}</span>` : ''}</div>
+    ${job.status !== 'queued' ? `<div class="bar"><div class="bar-fill${pct == null ? ' indet' : ''}" style="width:${pct ?? 100}%"></div></div><div class="jr-sub">${job.total ? `第 ${job.current + 1}/${job.total}` : ''}${job.detail ? ' · ' + escapeHtml(job.detail) : ''}</div>` : ''}`;
+}
+async function startScout() {
+  const domain = $('#scoutDomain').value.trim();
+  if (!domain) { toast('请输入领域'); return; }
+  try {
+    const r = await api('/api/scout/scan', { method: 'POST', body: JSON.stringify({ domain, limit: Number($('#scoutLimit').value) }) });
+    toast(r.message || '扫描已入队');
+    currentScout = null;
+    scoutHadActive = true;
+    await refreshScoutRuns();
+  } catch (e) { toast('❌ ' + e.message); }
+}
+async function refreshScoutRuns() {
+  const data = await api('/api/scout/runs').catch(() => null);
+  if (!data) return;
+  renderScoutJob(data.activeJob);
+  const box = $('#scoutRunsBox');
+  if (box) {
+    box.innerHTML = data.runs.length
+      ? data.runs.map((r) => `
+        <div class="runchip ${currentScout === r.id ? 'active' : ''} ${r.status}" data-run="${r.id}" onclick="selectScout(${r.id})">
+          <span>${escapeHtml(r.domain)}</span>
+          <span style="margin-left:auto;font-size:10.5px">${r.status === 'running' ? '⏳' : r.status === 'error' ? '✕' : '✓'} ${r.blog_count}位</span>
+          <span class="chip-del" title="删除此记录" onclick="event.stopPropagation(); deleteScoutRun(${r.id}, this)">×</span>
+        </div>`).join('')
+      : '<div class="empty" style="padding:14px 0">还没有扫描记录</div>';
+  }
+  if (data.runs.length && !currentScout) await selectScout(data.runs.find((r) => r.status === 'done')?.id || data.runs[0].id);
+}
+async function deleteScoutRun(id, el) {
+  if (!confirm('删除这条扫描记录？（已加入监控的博主不受影响）')) return;
+  try {
+    await api('/api/scout/runs/' + id, { method: 'DELETE' });
+    el.closest('.runchip').remove();
+    if (currentScout === id) { currentScout = null; await refreshScoutRuns(); }
+    toast('已删除');
+  } catch (e) { toast('❌ ' + e.message); }
+}
+async function deleteSearchRunApi(id, el) {
+  if (!confirm('删除这条搜索记录？（含其报告文件）')) return;
+  try {
+    await api('/api/search/runs/' + id, { method: 'DELETE' });
+    el.closest('.runchip').remove();
+    if (currentSearchRun === id) { currentSearchRun = null; await refreshSearchRuns(); }
+    toast('已删除');
+  } catch (e) { toast('❌ ' + e.message); }
+}
+async function selectScout(id) {
+  currentScout = id;
+  document.querySelectorAll('#scoutRunsBox .runchip').forEach((c) => c.classList.toggle('active', false));
+  await renderScoutRun(id);
+}
+async function renderScoutRun(id) {
+  const run = await api(`/api/scout/runs/${id}`).catch(() => null);
+  if (!run) return;
+  currentScoutBlogs = run.blogs || [];
+  compareSel = [];
+  document.querySelectorAll('#scoutRunsBox .runchip').forEach((c) => c.classList.toggle('active', c.dataset.run === String(id)));
+  const host = $('#scoutList');
+  if (!run.blogs?.length) { host.innerHTML = '<div class="empty">' + (run.status === 'running' ? '扫描中…' : '本次扫描无结果') + '</div>'; return; }
+  const ratingColor = (rt) => rt?.includes('潜力') || rt?.includes('黑马') ? 'ok' : rt?.includes('头部') || rt?.includes('标杆') || rt?.includes('成熟') ? 'wait' : rt?.includes('停更') || rt?.includes('低互动') ? 'err' : 'warn';
+  host.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <h2 style="margin:0">${escapeHtml(run.domain)} · 潜力榜</h2>
+      <button class="btn-sm" onclick="openCompare()" ${run.blogs.length < 2 ? 'disabled' : ''}>📊 对比所选博主</button>
+      <span style="font-size:11.5px;color:var(--text3)">勾选 2-4 位进行横向对比</span>
+    </div>` + run.blogs.map((b) => {
+    let ai = {};
+    try { ai = JSON.parse(b.ai_analysis || '{}'); } catch {}
+    return `
+    <div class="scout-row ${b.monitored ? 'monitored' : ''}" data-sec="${b.sec_uid}">
+      <input type="checkbox" class="cmp-box" data-sec="${b.sec_uid}" onchange="onCompareToggle(this)" style="width:18px;height:18px;margin-top:12px;flex-shrink:0">
+      <div class="avatar">${b.avatar ? imgTag(b.avatar, '', '') : escapeHtml((b.nickname || '?')[0])}</div>
+      <div style="flex:1;min-width:0">
+        <div class="b-name"><span>${escapeHtml(b.nickname || b.sec_uid.slice(0, 10))}</span>
+          <span class="pill ${ratingColor(b.rating)}">${escapeHtml(b.rating || '未评级')}</span>
+          ${b.score != null ? `<span class="score">${b.score}</span>` : ''}
+        </div>
+        <div class="b-sub">${fmt(b.follower_count)} 粉丝 · 平均赞 ${fmt(b.total_like && b.video_samples ? Math.round(b.total_like / Math.max(b.video_samples,1)) : b.median_digg)} · 赞粉比 ${b.heat_ratio ?? '?'}% · ${b.fresh_days ?? '?'} 天前更新${b.growth != null ? ` · <b style="color:${b.growth >= 0 ? 'var(--green)' : 'var(--red)'}">涨粉 ${b.growth > 0 ? '+' : ''}${b.growth}%</b>` : ''}</div>
+        ${ai.oneLine ? `<div class="scout-why">💡 ${escapeHtml(ai.oneLine)}${ai.why ? ' · ' + escapeHtml(ai.why) : ''}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${b.monitored ? '<span class="pill ok">监控中</span>' : `<button class="primary btn-sm" onclick="addScoutToMonitor(${id},'${b.sec_uid}','${escapeHtml(b.nickname || '')}', this)">＋ 监控</button>`}
+        <button class="ghost btn-sm" onclick="window.open('https://www.douyin.com/user/${b.sec_uid}','_blank')">主页 ↗</button>
+      </div>
+    </div>`;
+  }).join('');
+  renderScatter(id);
+}
+let compareSel = [];
+function onCompareToggle(el) {
+  const sec = el.dataset.sec;
+  if (el.checked) {
+    if (compareSel.length >= 4) { el.checked = false; toast('最多同时对比 4 位'); return; }
+    compareSel.push(sec);
+  } else {
+    compareSel = compareSel.filter((x) => x !== sec);
+  }
+}
+function openCompare() {
+  if (compareSel.length < 2) { toast('请至少勾选 2 位博主'); return; }
+  const rows = compareSel.map((sec) => (currentScoutBlogs || []).find((b) => b.sec_uid === sec)).filter(Boolean);
+  if (rows.length < 2) { toast('数据不足，请重新勾选'); return; }
+  const metric = (b) => {
+    let ai = {}; try { ai = JSON.parse(b.ai_analysis || '{}'); } catch {}
+    return { ai, avgLike: b.median_digg || 0 };
+  };
+  const cell = (v) => `<td style="text-align:center">${v}</td>`;
+  const html = rows.map((b) => { const m = metric(b); return `
+    <tr>
+      <td style="font-weight:600">${escapeHtml(b.nickname || b.sec_uid.slice(0, 10))}</td>
+      ${cell(fmt(b.follower_count))}
+      ${cell(fmt(m.avgLike))}
+      ${cell((b.heat_ratio ?? '?') + '%')}
+      ${cell(fmt(b.max_digg))}
+      ${cell(fmt(b.aweme_count))}
+      ${cell(b.fresh_days != null ? b.fresh_days + ' 天前' : '?')}
+      ${cell(`<span class="pill ${b.rating?.includes('潜力') || b.rating?.includes('黑马') ? 'ok' : b.rating?.includes('停更') ? 'err' : 'wait'}">${escapeHtml(b.rating || '-')}</span>`)}
+      ${cell(b.score ?? '-')}
+    </tr>
+    <tr><td colspan="9" style="font-size:12px;color:var(--text2);padding-bottom:14px">
+      ${m.ai.why ? '💡 ' + escapeHtml(m.ai.why) : ''}${m.ai.learn ? '<br>📌 可学：' + escapeHtml(m.ai.learn) : ''}${m.ai.risk ? '<br>⚠️ 短板：' + escapeHtml(m.ai.risk) : ''}
+    </td></tr>`; }).join('');
+  const pane = $('#searchDetail');
+  const dlg = document.createElement('div');
+  dlg.id = 'compareModal';
+  dlg.className = 'modal-wrap';
+  dlg.style.display = 'block';
+  dlg.onclick = (e) => { if (e.target === dlg) dlg.remove(); };
+  dlg.innerHTML = `<div class="modal" style="max-width:1080px">
+    <div class="modal-head"><h2>📊 博主横向对比 · ${rows.length} 位</h2><button class="ghost btn-sm" onclick="document.getElementById('compareModal').remove()">关闭</button></div>
+    <div class="md" style="overflow-x:auto;margin-top:14px">
+      <table style="min-width:760px">
+        <thead><tr><th>博主</th><th style="text-align:center">粉丝</th><th style="text-align:center">单条均赞</th><th style="text-align:center">赞粉比</th><th style="text-align:center">最高赞</th><th style="text-align:center">作品数</th><th style="text-align:center">最近更新</th><th style="text-align:center">评级</th><th style="text-align:center">评分</th></tr></thead>
+        <tbody>${html}</tbody>
+      </table>
+    </div>
+  </div>`;
+  document.body.appendChild(dlg);
+}
+
+async function addScoutToMonitor(runId, secUid, nickname, btn) {
+  const row = (currentScoutBlogs || []).find((x) => x.sec_uid === secUid) || {};
+  try {
+    await api(`/api/scout/runs/${runId}/add`, { method: 'POST', body: JSON.stringify({ secUid, nickname, avatar: row.avatar, signature: row.signature, followerCount: row.follower_count }) });
+    if (btn) { btn.outerHTML = '<span class="pill ok">监控中</span>'; }
+    toast(`已加入监控：${nickname || secUid.slice(0, 10)}，去监控视图点「立即检查」拉取数据`);
+    loadBloggers();
+  } catch (e) { toast('❌ ' + e.message); }
+}
+async function renderScatter(runId) {
+  const data = await api(`/api/scout/runs/${runId}/scatter`).catch(() => []);
+  const el = document.getElementById('cScatter');
+  if (!el || !data.length) return;
+  if (scoutScatter) scoutScatter.dispose();
+  const pal = chartPalette();
+  scoutScatter = echarts.init(el);
+  const byRating = {};
+  for (const d of data) { (byRating[d.rating || '其他'] ||= []).push(d); }
+  const colors = ['#0a84ff', '#30d158', '#ff9f0a', '#bf5af2', '#ff453a', '#64d2ff', '#ffd60a'];
+  const series = Object.entries(byRating).map(([rt, pts], i) => ({
+    name: rt, type: 'scatter',
+    data: pts.map((d) => ({ value: [d.x, d.y], name: d.name, z: d.z, score: d.score, rating: d.rating })),
+    symbolSize: (val, params) => 10 + Math.log10(Math.max((params.data.z || 1), 1)) * 8,
+    itemStyle: { color: colors[i % colors.length] + 'cc', borderColor: colors[i % colors.length], borderWidth: 1 },
+    emphasis: { focus: 'series' },
+  }));
+  scoutScatter.setOption({
+    textStyle: { fontFamily: '-apple-system, "PingFang SC", sans-serif', color: pal.text },
+    legend: { top: 0, type: 'scroll', textStyle: { color: pal.text, fontSize: 11 }, icon: 'circle' },
+    tooltip: {
+      backgroundColor: pal.tooltipBg, borderWidth: 0,
+      textStyle: { color: document.documentElement.dataset.theme === 'dark' ? '#f5f5f7' : '#1d1d1f', fontSize: 12 },
+      extraCssText: 'border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);',
+      formatter: (p) => `<b>${p.data.name}</b><br/>粉丝 ${fmt(p.data.x)} · 赞粉比 ${p.data.y}%<br/>均赞 ${fmt(p.data.z)} · 评分 ${p.data.score ?? ''}<br/><span style="color:${pal.text}">${p.data.rating || ''}</span>`,
+    },
+    grid: { left: 10, right: 20, top: 34, bottom: 30, containLabel: true },
+    xAxis: { type: 'log', name: '粉丝', nameTextStyle: { color: pal.faint, fontSize: 10 }, splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint, formatter: (v) => fmt(v) } },
+    yAxis: { type: 'value', name: '赞粉比 %', nameTextStyle: { color: pal.faint, fontSize: 10 }, splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint } },
+    series,
+  });
+  // 使用命名函数避免重复绑定（renderScatter 会被多次调用）
+  scoutScatter.on('finished', () => {});
+}
+$('#scoutDomain').addEventListener('keydown', (e) => { if (e.key === 'Enter') startScout(); });
+
+/* ============ 每日简报 ============ */
+async function loadBriefingTab() {
+  const briefings = await api('/api/briefings').catch(() => []);
+  const list = $('#briefingList');
+  if (list) {
+    list.innerHTML = briefings.length
+      ? briefings.map((b) => `
+        <div class="runchip" onclick="viewBriefing('${b.date}')">
+          <span>${escapeHtml(b.date)}</span>
+          <span style="margin-left:auto;font-size:10.5px">${escapeHtml(b.domain)}</span>
+        </div>`).join('')
+      : '<div class="empty" style="padding:14px 0">暂无简报</div>';
+  }
+}
+
+async function viewBriefing(date) {
+  const briefing = await api(`/api/briefings/${date}`).catch(() => null);
+  const content = $('#briefingContent');
+  if (!content || !briefing) return;
+  content.innerHTML = `
+    <div class="card">
+      <h4>📰 ${escapeHtml(briefing.domain)} · ${escapeHtml(briefing.date)}</h4>
+      <div class="md" style="white-space:pre-wrap;font-size:13px;line-height:1.8;margin-top:14px">${escapeHtml(briefing.content)}</div>
+    </div>
+  `;
+}
+
+async function generateBriefing() {
+  try {
+    const result = await api('/api/briefings/generate', { method: 'POST', body: '{}' });
+    if (result.error) { toast('⚠️ ' + result.error); return; }
+    toast('简报已生成');
+    loadBriefingTab();
+    viewBriefing(result.date);
+  } catch (e) { toast('❌ ' + e.message); }
+}
+
+/* ============ 创作工作台 ============ */
+async function loadCreationTab() {
+  // 初始加载，无需操作
+}
+
+async function runCreationPlan() {
+  const topic = $('#creationTopic').value.trim();
+  if (!topic) { toast('请输入主题'); return; }
+  const refs = $('#creationRefs').value.split('\n').filter(r => r.trim());
+  
+  const resultDiv = $('#creationResult');
+  resultDiv.innerHTML = '<div class="empty">策划生成中...</div>';
+  
+  try {
+    const plan = await api('/api/creation/plan', { method: 'POST', body: JSON.stringify({ topic, references: refs }) });
+    renderCreationPlan(plan);
+  } catch (e) {
+    resultDiv.innerHTML = `<div class="empty">❌ ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderCreationPlan(plan) {
+  const resultDiv = $('#creationResult');
+  const refsHtml = plan.references.slice(0, 5).map((v, i) => `
+    <div class="scout-row" style="padding:10px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${i + 1}. ${escapeHtml((v.title || '').slice(0, 40))}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">👍 ${v.stats?.digg || 0} · ${escapeHtml(v.author?.nickname || '')}</div>
+      </div>
+    </div>
+  `).join('');
+  
+  resultDiv.innerHTML = `
+    <div class="card" style="margin-bottom:14px">
+      <h4>📊 对标视频参考</h4>
+      ${refsHtml}
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <h4> 选题策划方案</h4>
+      <div class="md" style="white-space:pre-wrap;font-size:13px;line-height:1.8">${escapeHtml(plan.plan)}</div>
+    </div>
+    <div class="card">
+      <h4>️ 生成脚本</h4>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <select id="scriptAngle" style="flex:1;min-width:200px">
+          <option value="">选择角度...</option>
+        </select>
+        <select id="scriptStyle" style="width:120px">
+          <option value="干货">干货风格</option>
+          <option value="故事">故事风格</option>
+          <option value="争议">争议风格</option>
+        </select>
+        <button class="primary btn-sm" onclick="runScriptGeneration('${escapeHtml(plan.topic)}')">生成脚本</button>
+      </div>
+      <div id="scriptResult" style="margin-top:14px"></div>
+    </div>
+  `;
+}
+
+async function runScriptGeneration(topic) {
+  const angle = $('#scriptAngle').value;
+  const style = $('#scriptStyle').value;
+  if (!angle) { toast('请先选择角度'); return; }
+  
+  const resultDiv = $('#scriptResult');
+  resultDiv.innerHTML = '<div class="empty">脚本生成中...</div>';
+  
+  try {
+    const result = await api('/api/creation/script', { method: 'POST', body: JSON.stringify({ topic, angle, style }) });
+    resultDiv.innerHTML = `<div class="md" style="white-space:pre-wrap;font-size:13px;line-height:1.8">${escapeHtml(result.script)}</div>`;
+  } catch (e) {
+    resultDiv.innerHTML = `<div class="empty">❌ ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+/* ============ 竞品监控视图 ============ */
+let currentCompetitor = null;
+async function loadCompetitorsTab() {
+  const data = await api('/api/competitors').catch(() => null);
+  if (!data) return;
+  
+  // 渲染竞品列表
+  const list = $('#competitorList');
+  if (list) {
+    list.innerHTML = data.competitors.length
+      ? data.competitors.map((c) => `
+        <div class="scout-row">
+          <div class="avatar">${c.avatar ? imgTag(c.avatar, '', '') : escapeHtml((c.nickname || '?')[0])}</div>
+          <div style="flex:1;min-width:0">
+            <div class="b-name"><span>${escapeHtml(c.nickname || c.sec_uid.slice(0, 10))}</span></div>
+            <div class="b-sub">${fmt(c.follower_count)} 粉丝 · 阈值 ${c.alert_threshold}x · ${c.last_checked_at ? relTime(c.last_checked_at) : '从未检查'}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="primary btn-sm" onclick="checkCompetitor(${c.id})">立即检查</button>
+            <button class="ghost btn-sm" onclick="removeCompetitor(${c.id})">移除</button>
+          </div>
+        </div>`).join('')
+      : '<div class="empty"><span class="big">🎯</span>添加竞品博主开始监控</div>';
+  }
+  
+  // 渲染预警
+  const alerts = $('#competitorAlerts');
+  if (alerts) {
+    alerts.innerHTML = data.alerts.length
+      ? data.alerts.map((a) => `
+        <div class="runchip ${a.read ? '' : 'active'}" style="margin-bottom:6px">
+          <span>${escapeHtml(a.nickname || '未知')}</span>
+          <span style="margin-left:auto;font-size:10.5px">${a.alert_type === 'viral' ? '🔥 爆赞' : '⚠️'} ${escapeHtml((a.detail || '').slice(0, 30))}</span>
+        </div>`).join('')
+      : '<div class="empty" style="padding:14px 0">暂无预警</div>';
+  }
+}
+
+async function showAddCompetitor() {
+  const dlg = document.createElement('div');
+  dlg.className = 'modal-wrap';
+  dlg.style.display = 'block';
+  dlg.onclick = (e) => { if (e.target === dlg) dlg.remove(); };
+  dlg.innerHTML = `<div class="modal" style="max-width:460px">
+    <div class="modal-head"><h2>添加竞品博主</h2><button class="ghost btn-sm" onclick="this.closest('.modal-wrap').remove()">关闭</button></div>
+    <div style="margin-top:16px">
+      <label style="font-size:12px;color:var(--text2)">主页链接或 sec_uid</label>
+      <input id="cmpUid" placeholder="https://www.douyin.com/user/MS4w..." style="margin-top:6px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-top:12px">爆赞预警倍数（相对历史中位点赞）</label>
+      <input id="cmpThreshold" type="number" min="1" max="20" value="3" style="margin-top:6px">
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">例：3 = 点赞超过历史中位数的 3 倍时预警</div>
+      <button class="primary" style="width:100%;margin-top:16px" onclick="doAddCompetitor(this)">添加并监控</button>
+      <div id="cmpErr" style="color:var(--red);font-size:12px;margin-top:8px;min-height:16px"></div>
+    </div>
+  </div>`;
+  document.body.appendChild(dlg);
+}
+
+async function doAddCompetitor(btn) {
+  const uid = document.getElementById('cmpUid').value.trim();
+  const threshold = Number(document.getElementById('cmpThreshold').value) || 3;
+  const err = document.getElementById('cmpErr');
+  if (!uid) { err.textContent = '请输入链接或 sec_uid'; return; }
+  btn.disabled = true; btn.textContent = '添加中…';
+  try {
+    const r = await api('/api/bloggers', { method: 'POST', body: JSON.stringify({ url: uid }) });
+    await api(`/api/bloggers/${r.id}/type`, { method: 'POST', body: JSON.stringify({ type: 'competitor', threshold }) });
+    btn.closest('.modal-wrap').remove();
+    toast('已添加为竞品博主');
+    loadCompetitorsTab();
+  } catch (e) {
+    err.textContent = e.message;
+    btn.disabled = false; btn.textContent = '添加并监控';
+  }
+}
+
+async function checkCompetitor(id) {
+  try {
+    await api(`/api/bloggers/${id}/check`, { method: 'POST', body: '{}' });
+    toast('竞品检查已启动');
+    setTimeout(loadCompetitorsTab, 5000);
+  } catch (e) { toast('❌ ' + e.message); }
+}
+
+async function removeCompetitor(id) {
+  if (!confirm('确定移除该竞品博主？')) return;
+  try {
+    await api(`/api/bloggers/${id}`, { method: 'DELETE' });
+    toast('已移除');
+    loadCompetitorsTab();
+  } catch (e) { toast('❌ ' + e.message); }
+}
+
+/* ============ 选题分析视图 ============ */
+let currentSearchRun = null;
+let searchVideos = [];
+let searchPollTimer = null, searchHadActive = false;
+
+async function loadSearchTab() {
+  await refreshSearchRuns();
+  if (!searchPollTimer) {
+    searchPollTimer = setInterval(pollSearchJob, 3000);
+  }
+}
+async function refreshSearchRuns() {
+  let data;
+  try { data = await api('/api/search/runs'); } catch { return; }
+  const box = $('#searchRunsBox');
+  if (!box) return;
+  box.innerHTML = data.runs.length
+    ? data.runs.map((r) => `
+      <div class="runchip ${currentSearchRun === r.id ? 'active' : ''} ${r.status}" data-run="${r.id}" onclick="selectSearchRun(${r.id})">
+        <span>${escapeHtml(r.keyword)}</span>
+        <span style="margin-left:auto;font-size:10.5px">${r.status === 'running' ? '⏳' : r.status === 'error' ? '✕' : '✓'} ${r.result_count ?? 0}条</span>
+        <span class="chip-del" title="删除此记录" onclick="event.stopPropagation(); deleteSearchRunApi(${r.id}, this)">×</span>
+      </div>`).join('')
+    : '<div class="empty" style="padding:14px 0">还没有搜索记录</div>';
+  renderSearchJob(data.activeJob);
+  if (!currentSearchRun && data.runs.length) {
+    const done = data.runs.find((r) => r.status === 'done') || data.runs[0];
+    await selectSearchRun(done.id);
+  }
+}
+async function pollSearchJob() {
+  if (currentView !== 'search') return;
+  let data;
+  try { data = await api('/api/search/runs'); } catch { return; }
+  renderSearchJob(data.activeJob);
+  if (data.activeJob) {
+    searchHadActive = true;
+    if (currentSearchRun) refreshSearchRunVideos(currentSearchRun, false);
+  } else if (searchHadActive) {
+    searchHadActive = false;
+    if (currentSearchRun) refreshSearchRunVideos(currentSearchRun, true);
+  }
+}
+function renderSearchJob(job) {
+  const card = $('#searchJobCard');
+  if (!card) return;
+  if (!job) { card.style.display = 'none'; card.innerHTML = ''; return; }
+  card.style.display = '';
+  const pct = job.total ? Math.round((job.current / job.total) * 100) : null;
+  card.innerHTML = `
+    <div class="jr-top"><b>${job.status === 'queued' ? '⏳ 排队中' : '🔍 ' + escapeHtml(job.stage || '搜索中')}</b>${job.etaSec != null ? `<span class="jr-eta">剩余 ${fmtEta(job.etaSec)}</span>` : ''}</div>
+    ${job.status !== 'queued' ? `<div class="bar"><div class="bar-fill${pct == null ? ' indet' : ''}" style="width:${pct ?? 100}%"></div></div><div class="jr-sub">${job.total ? `第 ${job.current + 1}/${job.total} 条` : ''}${job.detail ? ' · ' + escapeHtml(job.detail) : ''}</div>` : ''}`;
+}
+async function startSearchAnalyze(listOnly = false) {
+  const kw = $('#searchKw').value.trim();
+  if (!kw) { toast('请输入关键词'); return; }
+  try {
+    await api('/api/search/analyze', { method: 'POST', body: JSON.stringify({ keyword: kw, topN: listOnly ? 0 : Number($('#searchTopN').value) }) });
+    currentSearchRun = null;
+    toast(listOnly ? '搜索任务已启动' : '搜索分析已入队，进度见左栏');
+    await refreshSearchRuns();
+    searchHadActive = true;
+  } catch (e) { toast('❌ ' + e.message); }
+}
+async function selectSearchRun(id) {
+  currentSearchRun = id;
+  document.querySelectorAll('#searchRunsBox .runchip').forEach((c) => c.classList.remove('active'));
+  await refreshSearchRunVideos(id, true);
+}
+async function refreshSearchRunVideos(id, rerender) {
+  let run;
+  try { run = await api(`/api/search/runs/${id}`); } catch { return; }
+  document.querySelectorAll('#searchRunsBox .runchip').forEach((c) => c.classList.toggle('active', c.dataset.run === String(id)));
+  const list = $('#svList');
+  if (!list) return;
+  if (rerender) {
+    searchVideos = run.videos;
+    list.innerHTML = !run.videos.length
+      ? `<div class="empty">${run.status === 'running' ? '搜索中…' : run.status === 'error' ? '✕ ' + escapeHtml(run.error || '') : '该次搜索无结果'}</div>`
+      : `<div style="display:flex;gap:8px;margin:-2px 2px 8px;flex-wrap:wrap">
+           <button class="btn-sm" onclick="analyzeAllTop(${id})">🧠 分析前 ${run.topn || 5} 条爆款</button>
+           <button class="btn-sm" onclick="viewSearchReport(${id})" ${run.hasReport ? '' : 'disabled title="报告未生成"'}>📄 调研报告</button>
+           ${run.has_more ? `<button class="btn-sm" onclick="loadMoreSearchRun(${id}, this)">加载更多结果</button>` : ''}
+         </div>`
+      + run.videos.map((v) => `
+        <div class="vrow" data-aweme="${v.aweme_id}" onclick="openSvVideo('${v.aweme_id}')">
+          <div class="rank-badge">#${v.rank}</div>
+          ${imgTag(v.cover, 'cover', '')}
+          <div class="vinfo">
+            <div class="vt" title="${escapeHtml(v.title)}">${escapeHtml(v.title || v.aweme_id)}</div>
+            <div class="vm"><span>${escapeHtml(v.author || '?')}</span><span>♥ ${fmt(v.digg)}</span><span>💬 ${fmt(v.comment_count)}</span><span class="st">${v.analyzed ? '<span class="pill ok">已拆解</span>' : v.analyses ? '<span class="pill ok">有分析</span>' : '<button class="btn-analyze" onclick="event.stopPropagation(); analyzeOne(\'' + v.aweme_id + '\', this)">深度分析</button>'}</span></div>
+          </div>
+        </div>`).join('');
+  } else {
+    // 轻刷新：只更新状态
+    for (const v of run.videos) {
+      const st = list.querySelector(`.vrow[data-aweme="${v.aweme_id}"] .st`);
+      if (st && v.analyzed && !st.querySelector('.pill')) st.innerHTML = '<span class="pill ok">已拆解</span>';
+    }
+  }
+}
+async function loadMoreSearchRun(id, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '加载中…'; }
+  try {
+    await api(`/api/search/runs/${id}/more`, { method: 'POST', body: '{}' });
+    await refreshSearchRunVideos(id, true);
+    toast('已追加新结果');
+  } catch (e) { toast('❌ ' + e.message); if (btn) { btn.disabled = false; btn.textContent = '加载更多结果'; } }
+}
+async function analyzeAllTop(id) {
+  try {
+    const run = await api(`/api/search/runs/${id}`);
+    const ids = run.videos.slice(0, run.topn || 5).map((v) => v.aweme_id);
+    await api('/api/videos/analyze-batch', { method: 'POST', body: JSON.stringify({ awemeIds: ids }) });
+    toast(`已入队 ${ids.length} 条深度分析`);
+    searchHadActive = true;
+  } catch (e) { toast('❌ ' + e.message); }
+}
+async function analyzeOne(awemeId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '排队中…'; }
+  try {
+    await api(`/api/videos/${awemeId}/analyze`, { method: 'POST', body: '{}' });
+    toast('深度分析已入队');
+  } catch (e) { toast('❌ ' + e.message); if (btn) { btn.disabled = false; btn.textContent = '深度分析'; return; } }
+}
+async function openSvVideo(awemeId) {
+  document.querySelectorAll('#svList .vrow').forEach((r) => r.classList.toggle('active', r.dataset.aweme === awemeId));
+  const pane = $('#searchDetail');
+  pane.innerHTML = '<div class="card detail-inner"><div class="empty">加载中…</div></div>';
+  const v = await api(`/api/videos/${awemeId}`);
+  renderVideoDetail(v, pane);
+  pane.scrollTop = 0;
+}
+async function viewSearchReport(runId) {
+  const pane = $('#searchDetail');
+  pane.innerHTML = '<div class="card detail-inner"><div class="empty">加载中…</div></div>';
+  const res = await fetch(`/api/search/runs/${runId}/report`);
+  if (!res.ok) { toast('报告尚未生成'); return; }
+  const md = await res.text();
+  pane.innerHTML = `<div class="card detail-inner">
+    <div class="detail-head2"><h2>选题调研报告</h2><button class="btn-sm" onclick="refreshSearchRunVideos(${runId}, true)">← 返回视频列表</button></div>
+    <div class="md report-md">${marked.parse(md)}</div></div>`;
+  pane.scrollTop = 0;
+}
+async function refreshLogs() {
+  const box = $('#logBox');
+  try { box.textContent = await (await fetch('/api/logs?lines=160')).text(); box.scrollTop = box.scrollHeight; } catch {}
+}
+async function selectBlogger(id) {
+  currentBlogger = id;
+  loadBloggers();
+  if (currentTab === 'dashboard') loadDashboard(id);
+  else if (currentTab === 'videos') loadVideos(id);
+  else if (currentTab === 'reports') loadReports(id);
+}
+
+/* ============ 数据仪表盘 ============ */
+function chartPalette() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  return {
+    text: dark ? '#a1a1a8' : '#6e6e73',
+    faint: dark ? '#66666e' : '#aeaeb2',
+    axis: dark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.08)',
+    split: dark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.045)',
+    tooltipBg: dark ? 'rgba(28,28,32,.95)' : 'rgba(255,255,255,.98)',
+    accent: dark ? '#0a84ff' : '#0071e3',
+    green: dark ? '#30d158' : '#34c759',
+    orange: dark ? '#ff9f0a' : '#ff9500',
+    purple: dark ? '#bf5af2' : '#af52de',
+  };
+}
+function baseChart(pal) {
+  return {
+    textStyle: { fontFamily: '-apple-system, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif', color: pal.text },
+    grid: { left: 8, right: 14, top: 26, bottom: 4, containLabel: true },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: pal.tooltipBg, borderWidth: 0,
+      textStyle: { color: document.documentElement.dataset.theme === 'dark' ? '#f5f5f7' : '#1d1d1f', fontSize: 12 },
+      extraCssText: 'border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);backdrop-filter:blur(10px);',
+    },
+  };
+}
+async function loadDashboard(id) {
+  $('#dashBox').innerHTML = '<div class="empty">加载中…</div>';
+  try {
+    const s = await api(`/api/bloggers/${id}/stats`);
+    if (!s.totals.videos) {
+      $('#dashBox').innerHTML = `<div class="empty"><span class="big">◎</span>还没有 ${escapeHtml(s.blogger.nickname || '')} 的视频数据<br><button class="primary" style="margin-top:14px" onclick="checkNow(${s.blogger.id})">立即检查抓取投稿</button></div>`;
+      return;
+    }
+    renderDashboard(s);
+  } catch (e) { $('#dashBox').innerHTML = `<div class="empty">加载失败: ${escapeHtml(e.message)}</div>`; }
+}
+function mkChart(id, option) {
+  const el = document.getElementById(id);
+  if (!el || !window.echarts) return null;
+  const c = echarts.init(el, null, { renderer: 'canvas' });
+  c.setOption(option);
+  dashCharts.push(c);
+  return c;
+}
+function renderDashboard(s) {
+  dashCharts.forEach((c) => c.dispose()); dashCharts = [];
+  const pal = chartPalette();
+  const t = s.totals, e = s.eng;
+  const kpi = (v, label, sub) => `<div class="card kpi"><b>${v}</b><span class="l">${label}</span>${sub ? `<span class="s">${sub}</span>` : ''}</div>`;
+  const kwHtml = (s.keywords || []).length
+    ? s.keywords.map((k) => `<span class="kw" style="font-size:${11 + Math.min(k.c * 0.9, 7)}px" title="出现 ${k.c} 次">${escapeHtml(k.w)}</span>`).join('')
+    : '<span style="color:var(--text3);font-size:12.5px">标题词频样本不足</span>';
+
+  $('#dashBox').innerHTML = `
+    <div class="kpi-grid">
+      ${kpi(fmt(s.blogger.followerCount), '粉丝', s.blogger.lastCheckedAt ? '更新于 ' + relTime(s.blogger.lastCheckedAt) : '')}
+      ${kpi(t.videos, '监控视频总数', `覆盖 ${new Date(s.timeline[0]?.t * 1000).toLocaleDateString('zh-CN')} 起`)}
+      ${kpi(s.v30Count, '近 30 天发布', s.avgGapDays != null ? `平均 ${s.avgGapDays} 天/条` : '')}
+      ${kpi(fmt(e.medianDigg), '中位点赞', `平均 ${fmt(e.avgDigg)}`)}
+      ${kpi((e.viralRate * 100).toFixed(0) + '%', '爆款占比', `≥ ${fmt(Math.round(e.medianDigg * 3))} 赞视为爆款`)}
+      ${kpi(e.likeCollectRatio != null ? e.likeCollectRatio + ' : 1' : '–', '赞藏比', e.likeCommentRatio != null ? `赞评比 ${e.likeCommentRatio} : 1` : '')}
+    </div>
+
+    <div class="card" id="trendCard" style="margin-bottom:12px;display:none">
+      <h4>📈 涨粉趋势 · 每次检查快照</h4><div id="cFollowerTrend" style="height:180px"></div>
+    </div>
+    <div class="dash-grid" style="margin-top:14px">
+      <div class="card"><h4>发布节奏 · 近 12 周</h4><div id="cWeek" style="height:240px"></div></div>
+      <div class="card"><h4>数据趋势 · 点赞 / 收藏 / 评论（对数轴）</h4><div id="cTrend" style="height:240px"></div></div>
+      <div class="card"><h4>点赞分布</h4><div id="cDist" style="height:240px"></div></div>
+      <div class="card"><h4>发布时间习惯</h4><div id="cHour" style="height:240px"></div></div>
+      <div class="card" style="grid-column:1/-1"><h4>爆款 TOP 8（按点赞）</h4><div id="cTop" style="height:300px"></div></div>
+      <div class="card" style="grid-column:1/-1"><h4>标题高频词</h4><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 2px">${kwHtml}</div></div>
+    </div>`;
+
+  // 发布节奏
+  const maxW = Math.max(...s.weeks.map((w) => w.count), 1);
+  mkChart('cWeek', {
+    ...baseChart(pal),
+    xAxis: { type: 'category', data: s.weeks.map((w) => w.label), axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false }, axisLabel: { color: pal.faint, fontSize: 10.5 } },
+    yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint, fontSize: 10.5 } },
+    series: [{
+      type: 'bar', data: s.weeks.map((w) => w.count), barWidth: '55%',
+      itemStyle: { borderRadius: [5, 5, 0, 0], color: (p) => p.value === maxW ? pal.green : pal.accent },
+      label: { show: true, position: 'top', color: pal.text, fontSize: 10.5, formatter: (p) => p.value || '' },
+    }],
+  });
+
+  // 数据趋势（对数轴多线）
+  const tl = s.timeline;
+  const fmtDay = (ts) => { const d = new Date(ts * 1000); return `${d.getMonth() + 1}/${d.getDate()}`; };
+  mkChart('cTrend', {
+    ...baseChart(pal),
+    legend: { top: 0, right: 0, icon: 'roundRect', itemWidth: 14, itemHeight: 4, textStyle: { color: pal.text, fontSize: 11 } },
+    xAxis: { type: 'category', data: tl.map((p) => fmtDay(p.t)), axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false }, axisLabel: { color: pal.faint, fontSize: 10.5, interval: Math.max(Math.floor(tl.length / 8), 0) } },
+    yAxis: { type: 'log', min: 1, splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint, fontSize: 10.5 } },
+    series: [
+      { name: '点赞', type: 'line', data: tl.map((p) => p.digg || 1), smooth: .35, symbol: 'none', lineStyle: { width: 2.5, color: pal.accent },
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: pal.accent + '55' }, { offset: 1, color: pal.accent + '00' }] } } },
+      { name: '收藏', type: 'line', data: tl.map((p) => p.collect || 1), smooth: .35, symbol: 'none', lineStyle: { width: 1.8, color: pal.green } },
+      { name: '评论', type: 'line', data: tl.map((p) => p.comment || 1), smooth: .35, symbol: 'none', lineStyle: { width: 1.8, color: pal.orange } },
+    ],
+  });
+
+  // 点赞分布
+  mkChart('cDist', {
+    ...baseChart(pal),
+    xAxis: { type: 'category', data: s.distribution.map((d) => d.label), axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false }, axisLabel: { color: pal.faint, fontSize: 10.5 } },
+    yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint, fontSize: 10.5 } },
+    series: [{
+      type: 'bar', data: s.distribution.map((d) => d.count), barWidth: '52%',
+      itemStyle: { borderRadius: [5, 5, 0, 0], color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: pal.accent }, { offset: 1, color: pal.accent + '66' }] } },
+      label: { show: true, position: 'top', color: pal.text, fontSize: 10.5, formatter: (p) => p.value || '' },
+    }],
+  });
+
+  // 发布时间习惯（小时 + 星期双图）
+  const weekNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const peakHour = s.hourDist.reduce((a, b) => (b.count > a.count ? b : a), { h: 0, count: 0 });
+  mkChart('cHour', {
+    ...baseChart(pal),
+    grid: [
+      { left: 8, right: 14, top: 26, bottom: 84, containLabel: true },
+      { left: 8, right: 14, top: 148, bottom: 8, containLabel: true },
+    ],
+    xAxis: [
+      { gridIndex: 0, type: 'category', data: s.hourDist.map((x) => x.h), axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false }, axisLabel: { color: pal.faint, fontSize: 9.5, interval: 2 } },
+      { gridIndex: 1, type: 'category', data: weekNames, axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false }, axisLabel: { color: pal.faint, fontSize: 10 } },
+    ],
+    yAxis: [
+      { gridIndex: 0, type: 'value', minInterval: 1, splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint, fontSize: 10 } },
+      { gridIndex: 1, type: 'value', minInterval: 1, splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint, fontSize: 10 } },
+    ],
+    series: [
+      { type: 'bar', xAxisIndex: 0, yAxisIndex: 0, data: s.hourDist.map((x) => x.count), barWidth: '58%', itemStyle: { borderRadius: [3, 3, 0, 0], color: (p) => p.dataIndex === peakHour.h && peakHour.count ? pal.green : pal.accent } },
+      { type: 'bar', xAxisIndex: 1, yAxisIndex: 1, data: s.weekDist.map((x) => x.count), barWidth: '48%', itemStyle: { borderRadius: [4, 4, 0, 0], color: pal.purple } },
+    ],
+  });
+
+  // 涨粉趋势（≥2 个快照才有意义）
+  api(`/api/bloggers/${s.blogger.id}/follower-trend`).then((trend) => {
+    if (!trend || trend.length < 2) return;
+    const card = document.getElementById('trendCard');
+    if (card) card.style.display = '';
+    const labels = trend.map((t) => t.taken_at.slice(5, 16));
+    const vals = trend.map((t) => t.follower_count || 0);
+    const growth = vals[vals.length - 1] - vals[0];
+    mkChart('cFollowerTrend', {
+      ...baseChart(pal),
+      xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false }, axisLabel: { color: pal.faint, fontSize: 10.5 } },
+      yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint, fontSize: 10.5, formatter: (v) => fmt(v) } },
+      series: [{ type: 'line', data: vals, smooth: .35, symbol: 'circle', symbolSize: 6, lineStyle: { width: 2.5, color: pal.green }, itemStyle: { color: pal.green },
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: pal.green + '44' }, { offset: 1, color: pal.green + '00' }] } },
+        label: { show: true, position: 'top', color: pal.text, fontSize: 10.5, formatter: (p) => p.dataIndex === vals.length - 1 ? fmt(p.value) : '' } }],
+      graphic: growth !== 0 ? [{ type: 'text', right: 12, top: 8, style: { text: (growth > 0 ? '+' : '') + fmt(growth) + ' 粉', fill: growth > 0 ? pal.green : pal.red, fontSize: 13, fontWeight: 700 } }] : [],
+    });
+  }).catch(() => {});
+
+  // 爆款 TOP8 横向条（点击跳到视频分屏详情）
+  const top = [...s.top].reverse();
+  const topChart = mkChart('cTop', {
+    ...baseChart(pal),
+    grid: { left: 8, right: 40, top: 8, bottom: 4, containLabel: true },
+    tooltip: { ...baseChart(pal).tooltip, trigger: 'item' },
+    xAxis: { type: 'value', splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint, fontSize: 10.5 } },
+    yAxis: { type: 'category', data: top.map((v) => v.title || v.awemeId), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: pal.text, fontSize: 11.5, width: 330, overflow: 'truncate' } },
+    series: [{
+      type: 'bar', data: top.map((v) => v.digg), barWidth: '56%',
+      itemStyle: { borderRadius: [0, 6, 6, 0], color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: pal.accent + '88' }, { offset: 1, color: pal.accent }] } },
+      label: { show: true, position: 'right', color: pal.text, fontSize: 11, fontWeight: 600 },
+    }],
+  });
+  if (topChart) topChart.on('click', () => { switchTab('videos'); setTimeout(() => openVideoDetail(top[top.length - 1]?.awemeId), 50); });
+}
+window.addEventListener('resize', () => {
+  dashCharts.forEach((c) => { try { c.resize(); } catch {} });
+  if (scoutScatter) { try { scoutScatter.resize(); } catch {} }
+});
+
+/* ============ 任务中心 ============ */
+let schedulerInfo = null;
+const STAGE_ICON = { '抓取投稿列表': '🔍', '下载视频': '⬇️', 'GPU 转写': '🎙', '抓取评论': '💬', 'AI 分析': '🧠', '生成日报': '📄', '准备素材': '📦' };
+function fmtDur(ms) {
+  const s = Math.round(ms / 1000);
+  return s < 60 ? s + 's' : Math.floor(s / 60) + 'm' + String(s % 60).padStart(2, '0') + 's';
+}
+function fmtEta(sec) {
+  if (sec == null) return '';
+  return sec < 60 ? `约 ${sec}s` : `约 ${Math.ceil(sec / 60)} 分钟`;
+}
+let jobsPanelOpen = false;
+function toggleJobsPanel(ev) {
+  ev && ev.stopPropagation();
+  jobsPanelOpen = !jobsPanelOpen;
+  const p = $('#jobsPanel');
+  if (p) p.style.display = jobsPanelOpen ? 'block' : 'none';
+  if (jobsPanelOpen) { loadJobs(); setTimeout(() => document.addEventListener('click', closeJobsPanel), 0); }
+}
+function closeJobsPanel() {
+  jobsPanelOpen = false;
+  const p = $('#jobsPanel');
+  if (p) p.style.display = 'none';
+  document.removeEventListener('click', closeJobsPanel);
+}
+function jobsBadgeUpdate(n) {
+  const b = $('#jobsBadge');
+  if (!b) return;
+  b.style.display = n > 0 ? 'block' : 'none';
+  b.textContent = n;
+}
+function jobItemHtml(j) {
+  const st = j.status === 'running' ? '<span class="pill ok">进行中</span>' : j.status === 'queued' ? '<span class="pill wait">排队</span>' : j.status === 'done' ? '<span class="pill ok">完成</span>' : '<span class="pill err">失败</span>';
+  const prog = j.status === 'running' && j.total
+    ? `<div class='bar' style='margin:8px 0 6px'><div class='bar-fill' style='width:${Math.round((j.current / j.total) * 100)}%'></div></div>`
+      + `<div class='jr-sub'>${escapeHtml(j.stage)} · 第 ${j.current + 1}/${j.total} 条${j.etaSec != null ? ' · 剩余 ' + fmtEta(j.etaSec) : ''}</div>`
+    : j.status === 'running' ? `<div class='jr-sub' style='margin-top:6px'>${escapeHtml(j.stage)}</div>` : '';
+  const err = j.error ? `<div class='jr-sub' style='color:var(--red)'>${escapeHtml(j.error.slice(0, 80))}</div>` : '';
+  return `<div class='job-running' style='margin:0 0 8px'>
+    <div class='jr-top'><b>${escapeHtml(j.label)}</b>${j.status === 'queued' ? `<span style='font-size:11px;color:var(--text2)'>第 ${j.queuePos + 1} 位</span>` : ''}${j.status === 'done' || j.status === 'error' ? `<span style='font-size:11px;color:var(--text3)'>${fmtDur(j.finishedAt - j.startedAt)}</span>` : ''}</div>
+    ${prog}${err}
+    <div style='margin-top:6px'>${st}</div>
+  </div>`;
+}
+async function loadJobs() {
+  let data, sched;
+  try {
+    [data, sched] = await Promise.all([api('/api/jobs'), api('/api/scheduler')]);
+  } catch { return; }
+  schedulerInfo = sched;
+  const active = data.jobs.filter((j) => j.status === 'queued' || j.status === 'running');
+  jobsBadgeUpdate(active.length);
+  if (jobsPanelOpen) {
+    const p = $('#jobsPanel');
+    const recent = data.jobs.filter((j) => j.status === 'done' || j.status === 'error').slice(0, 6);
+    p.innerHTML = `<div class='jp-title'><b>📋 任务队列</b><button class='ghost btn-sm' onclick='toggleJobsPanel()'>关闭</button></div>`
+      + (active.length ? active.map(jobItemHtml).join('') : '<div class=empty style="padding:18px 0">当前没有进行中的任务</div>')
+      + (recent.length ? `<div class='jr-recent'><div style='font-size:11px;color:var(--text3);margin-bottom:6px'>最近完成</div>${recent.map(jobItemHtml).join('')}</div>` : '');
+  }
+  const card = $('#jobsCard');
+  if (!card) return;
+  const recent = data.jobs.filter((j) => j.status === 'done' || j.status === 'error').slice(0, 4);
+  const running = active.filter((j) => j.status === 'running');
+  const queued = active.filter((j) => j.status === 'queued');
+
+  let inner = `<div class="jobs-head">
+      <h4>任务中心${data.stats.queued ? ` · <span style="color:var(--accent)">${data.stats.queued} 个排队</span>` : ''}</h4>
+      <div class="jobs-actions">
+        <button class="primary btn-sm" onclick="checkAll(this)" ${active.length && !queued.length ? '' : ''}>⚡ 一键监控全部</button>
+        <label class="switch-row" style="gap:7px">
+          <input type="checkbox" id="schedToggle" ${sched.enabled ? 'checked' : ''} onchange="toggleScheduler(this.checked)">
+          <span style="font-size:12px">${sched.enabled ? '定时中' : '已暂停'}${sched.nextRun ? ' · 下次 ' + new Date(sched.nextRun).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : ''}</span>
+        </label>
+      </div>
+    </div>`;
+
+  if (!active.length && !recent.length) {
+    inner += `<div class="empty" style="padding:22px 0">当前没有任务 · 点「一键监控全部」或博主卡的「立即检查」</div>`;
+  }
+  for (const j of running) {
+    const pct = j.total ? Math.round((j.current / j.total) * 100) : null;
+    const icon = STAGE_ICON[j.stage] || '⚙️';
+    inner += `<div class="job-running">
+      <div class="jr-top"><b>${icon} ${escapeHtml(j.label)}</b><span class="jr-eta">${j.etaSec != null ? '剩余 ' + fmtEta(j.etaSec) : '估算中…'} · 已进行 ${fmtDur(Date.now() - j.startedAt)}</span></div>
+      <div class="bar"><div class="bar-fill${pct == null ? ' indet' : ''}" style="width:${pct ?? 100}%"></div></div>
+      <div class="jr-sub">${escapeHtml(j.stage)}${j.total ? ` · 第 ${j.current + 1}/${j.total} 条` : ''}${j.detail ? ' · ' + escapeHtml(j.detail) : ''}</div>
+    </div>`;
+  }
+  if (queued.length) {
+    inner += `<div class="jr-queue">${queued.map((j) => `⏳ ${escapeHtml(j.label)}${j.queuePos >= 0 ? `（排在第 ${j.queuePos + 1} 位）` : ''}`).join('<br>')}</div>`;
+  }
+  if (recent.length) {
+    inner += `<div class="jr-recent">${recent.map((j) => {
+      const st = j.status === 'done' ? '<span class="pill ok">完成</span>' : '<span class="pill err">失败</span>';
+      return `<div class="jr-row">${st}<span>${escapeHtml(j.label)}</span><span style="margin-left:auto;color:var(--text3)">${fmtDur(j.finishedAt - j.startedAt)}${j.error ? ' · ' + escapeHtml(j.error.slice(0, 40)) : ''}</span></div>`;
+    }).join('')}</div>`;
+  }
+  card.innerHTML = inner;
+}
+async function checkAll(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '入队中…'; }
+  try {
+    const r = await api('/api/check-all', { method: 'POST', body: '{}' });
+    toast(`已把 ${r.queued} 个博主加入监控队列，按队列顺序执行`);
+  } catch (e) { toast('❌ ' + e.message); }
+  if (btn) { btn.disabled = false; btn.textContent = '⚡ 一键监控全部'; }
+  loadJobs();
+}
+async function toggleScheduler(on) {
+  try {
+    const r = await api('/api/scheduler', { method: 'POST', body: JSON.stringify({ enabled: on }) });
+    toast(on ? `定时监控已启用（${r.cron}）` : '定时监控已暂停');
+    loadJobs();
+  } catch (e) { toast('❌ ' + e.message); loadJobs(); }
+}
+
+/* ============ 视频分屏 ============ */
+async function loadVideos(id) {
+  const vids = await api(`/api/bloggers/${id}/videos`);
+  $('#nVideos').textContent = vids.length ? ` ${vids.length}` : '';
+  videoCache = vids;
+  if (!vids.length) {
+    $('#videoList').innerHTML = '<div class="empty">还没有视频数据<br>先在左侧登录并点「立即检查」</div>';
+    $('#videoDetail').innerHTML = '<div class="card detail-inner"><div class="empty"><span class="big">◎</span>暂无视频</div></div>';
+    currentVideo = null;
+    return;
+  }
+  const rows = vids.map((v) => {
+    const st = v.analyzed ? '<span class="pill ok">已分析</span>' : v.downloaded ? '<span class="pill warn">未分析</span>' : '<span class="pill wait">待处理</span>';
+    const act = v.analyzed ? st : `<button class="btn-analyze" onclick="event.stopPropagation(); analyzeOne('${v.aweme_id}', this)">分析</button>`;
+    return `
+    <div class="vrow ${currentVideo === v.aweme_id ? 'active' : ''}" data-aweme="${v.aweme_id}" onclick="openVideoDetail('${v.aweme_id}')">
+      ${imgTag(v.cover, 'cover', '')}
+      <div class="vinfo">
+        <div class="vt" title="${escapeHtml(v.title)}">${escapeHtml(v.title || v.aweme_id)}</div>
+        <div class="vm"><span>${ts(v.create_time).slice(5, 16)}</span><span>♥ ${fmt(v.digg)}</span><span>💬 ${fmt(v.comment_count)}</span><span>⭐ ${fmt(v.collect)}</span><span class="st">${act}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  $('#videoList').innerHTML = rows;
+  // 保持选中或默认选第一条
+  const target = vids.find((v) => v.aweme_id === currentVideo) ? currentVideo : vids[0].aweme_id;
+  openVideoDetail(target);
+}
+async function analyzeOne(awemeId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '已启动'; }
+  try {
+    await api(`/api/videos/${awemeId}/analyze`, { method: 'POST', body: '{}' });
+    toast('分析已启动：下载 → GPU 转写 → 评论 → 本地模型分析，几分钟内完成，列表会自动刷新');
+  } catch (e) { toast('❌ ' + e.message); if (btn) { btn.disabled = false; btn.textContent = '分析'; } return; }
+  // 延迟刷新两次（转写+分析需要时间）
+  setTimeout(() => { if (currentBlogger) loadVideos(currentBlogger); }, 8000);
+  setTimeout(() => { if (currentBlogger) loadVideos(currentBlogger); }, 30000);
+}
+async function openVideoDetail(awemeId, paneSel = '#videoDetail', listSel = '#videoList') {
+  currentVideo = awemeId;
+  document.querySelectorAll(`${listSel} .vrow`).forEach((r) => r.classList.toggle('active', r.dataset.aweme === awemeId));
+  const pane = $(paneSel);
+  if (!pane) return;
+  pane.innerHTML = '<div class="card detail-inner"><div class="empty">加载中…</div></div>';
+  const v = await api(`/api/videos/${awemeId}`);
+  renderVideoDetail(v, pane);
+}
+let detailCharts = [];
+function renderVideoDetail(v, pane) {
+  detailCharts.forEach((c) => c.dispose()); detailCharts = [];
+  pane.scrollTop = 0;
+  const analystHtml = v.analyses.filter((a) => a.kind === 'video').map((a) => `
+    <details><summary><b>${escapeHtml(a.model)}</b> · ${a.status === 'success' ? '✓ ' + (a.duration_ms / 1000).toFixed(1) + 's' : '✕ ' + escapeHtml((a.error || '').slice(0, 70))}</summary>
+      ${a.status === 'success' ? renderAnalysis(a.content) : ''}
+    </details>`).join('');
+  const synth = v.analyses.filter((a) => a.kind === 'synthesis' && a.status === 'success').pop();
+  pane.innerHTML = `<div class="card detail-inner">
+    <div class="detail-head2">
+      <h2>${escapeHtml(v.title || v.aweme_id)} <a href="https://www.douyin.com/video/${v.aweme_id}" target="_blank" title="在抖音打开">↗</a></h2>
+    </div>
+    <div class="player-row">
+      ${v.hasFile
+        ? `<video class="player" controls preload="metadata" poster="${escapeHtml(v.cover || '')}" src="/api/videos/${v.aweme_id}/file"></video>`
+        : `<div class="dl-box" id="dlBox"><button class="primary btn-sm" onclick="downloadVideo('${v.aweme_id}', this)">▶ 下载原视频到本地</button><span style="font-size:11.5px;color:var(--text3)">约 10-30 秒<br>完成后自动可播放</span></div>`}
+      <div class="player-side">
+        <div class="stats-row">
+          <div class="s"><b>${fmt(v.digg)}</b><span>点赞</span></div>
+          <div class="s"><b>${fmt(v.comment_count)}</b><span>评论</span></div>
+          <div class="s"><b>${fmt(v.collect)}</b><span>收藏</span></div>
+          <div class="s"><b>${fmt(v.share)}</b><span>分享</span></div>
+          <div class="s"><b>${ts(v.create_time).slice(5, 16)}</b><span>发布</span></div>
+          <div class="s"><b>${v.duration_sec || '?'}s</b><span>时长</span></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm" onclick="reanalyze('${v.aweme_id}')">重跑分析</button>
+          <button class="btn-sm" onclick="refreshComments('${v.aweme_id}')">重抓评论</button>
+        </div>
+      </div>
+    </div>
+    ${synth ? '<div class="section"><h3>综合结论</h3><div class="md">' + marked.parse(synth.content || '') + '</div></div>' : ''}
+    <div class="section"><h3>各模型拆解</h3>${analystHtml || '<span class="pill wait">尚未分析 — 点「重跑分析」发起拆解</span>'}</div>
+    <div class="section"><h3>高赞评论 · ${v.comments.length}</h3>${v.comments.slice(0, 50).map((c, i) => `
+      <div class="comment"><div class="rank">${i + 1}</div>
+        <div class="cbody"><div class="nick">${escapeHtml(c.nickname || '匿名')} · ${ts(c.create_time)}</div><div>${escapeHtml(c.content)}</div></div>
+        <div class="dig">♥ ${fmt(c.digg)}${c.reply_count ? ' · ' + c.reply_count + '回复' : ''}</div>
+      </div>`).join('') || '<span class="pill wait">暂无评论</span>'}</div>
+    <div class="section"><h3>口播转写稿</h3>${v.transcript_text ? `<div class="transcript">${escapeHtml(v.transcript_text)}</div>` : '<span class="pill wait">未转写</span>'}</div>
+    <div class="section" id="snapSection" style="display:none"><h3>📈 数据增长曲线 · 每次检查快照</h3><div id="snapChart" style="height:170px"></div></div>
+  </div>`;
+  api(`/api/videos/${v.aweme_id}/snapshots`).then((snaps) => {
+    if (!snaps || snaps.length < 2) return;
+    const sec = document.getElementById('snapSection');
+    if (!sec) return;
+    sec.style.display = '';
+    const el = document.getElementById('snapChart');
+    const pal = chartPalette();
+    const c = echarts.init(el);
+    detailCharts.push(c);
+    const mk = (key, name, color) => ({
+      name, type: 'line', smooth: .3, symbol: 'circle', symbolSize: 5,
+      data: snaps.map((x) => x[key] || 0), lineStyle: { width: 2, color },
+      itemStyle: { color },
+    });
+    c.setOption({
+      textStyle: { fontFamily: '-apple-system, "PingFang SC", sans-serif', color: pal.text },
+      legend: { top: 0, icon: 'roundRect', itemWidth: 14, itemHeight: 4, textStyle: { color: pal.text, fontSize: 11 } },
+      grid: { left: 8, right: 14, top: 30, bottom: 4, containLabel: true },
+      tooltip: { trigger: 'axis', backgroundColor: pal.tooltipBg, borderWidth: 0, textStyle: { color: pal.text, fontSize: 12 }, extraCssText: 'border-radius:10px;' },
+      xAxis: { type: 'category', data: snaps.map((x) => x.taken_at.slice(5, 16)), axisLine: { lineStyle: { color: pal.axis } }, axisTick: { show: false }, axisLabel: { color: pal.faint, fontSize: 10 } },
+      yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: pal.split } }, axisLabel: { color: pal.faint, fontSize: 10, formatter: (v2) => fmt(v2) } },
+      series: [mk('digg', '点赞', pal.accent), mk('collect', '收藏', pal.green), mk('comment', '评论', pal.orange)],
+    });
+  }).catch(() => {});
+}
+
+/* ============ 日报 ============ */
+async function loadReports(id) {
+  const rows = await api(`/api/reports/${id}`);
+  $('#nReports').textContent = rows.length ? ` ${rows.length}` : '';
+  if (!rows.length) {
+    $('#tab-reports').innerHTML = '<div class="empty"><span class="big">▢</span>还没有日报<br>跑一轮检查后自动生成</div>';
+    return;
+  }
+  const list = rows.map((r) => `
+    <div class="vrow" data-date="${r.report_date}" onclick="openReport(${id}, '${r.report_date}')">
+      <div class="rdate">${escapeHtml(r.report_date.slice(5).replace('-', '/'))}</div>
+      <div class="vinfo">
+        <div class="vt">分析日报 · ${escapeHtml(r.report_date)}</div>
+        <div class="vm"><span>生成于 ${escapeHtml(r.created_at)}</span></div>
+      </div>
+      <span class="pill wait st">→</span>
+    </div>`).join('');
+  $('#tab-reports').innerHTML = `<div class="split">
+    <div class="card vlist" id="reportList">${list}</div>
+    <div class="detail-pane" id="reportPane"><div class="card detail-inner"><div class="empty"><span class="big">📄</span>在左侧选择日期，右侧展示完整日报</div></div></div>
+  </div>`;
+  openReport(id, rows[0].report_date);
+}
+async function openReport(id, date) {
+  document.querySelectorAll('#reportList .vrow').forEach((r) => r.classList.toggle('active', r.dataset.date === date));
+  const pane = $('#reportPane');
+  if (!pane) return;
+  pane.innerHTML = '<div class="card detail-inner"><div class="empty">加载中…</div></div>';
+  const md = await (await fetch(`/api/reports/${id}/${date}`)).text();
+  pane.innerHTML = `<div class="card detail-inner"><div class="md report-md">${marked.parse(md)}</div></div>`;
+  pane.scrollTop = 0;
+}
+
+function renderAnalysis(content) {
+  try {
+    const j = JSON.parse(content);
+    const arr = (x) => Array.isArray(x) ? `<ul style="padding-left:20px">${x.map((i) => `<li>${escapeHtml(String(i))}</li>`).join('')}</ul>` : escapeHtml(String(x ?? ''));
+    const obj = (x) => Object.entries(x || {}).map(([k, v]) => `<div style="margin:3px 0"><b>${escapeHtml(k)}</b>：${escapeHtml(String(v))}</div>`).join('');
+    return `<div class="md">
+      <p><b>概述</b> — ${escapeHtml(j.summary || '')}</p>
+      <p style="margin-top:10px"><b>选题与受众</b></p>${obj(j.topic)}
+      <p style="margin-top:10px"><b>钩子</b></p>${obj(j.hook)}
+      <p style="margin-top:10px"><b>结构</b></p><ul style="padding-left:20px">${(j.structure || []).map((s) => `<li><b>${escapeHtml(s.time || '')}</b> ${escapeHtml(s.part || '')} — ${escapeHtml(s.purpose || '')}</li>`).join('')}</ul>
+      <p style="margin-top:10px"><b>爆款要素</b></p>${arr(j.viral_elements)}
+      <p style="margin-top:10px"><b>评论区洞察</b></p>
+      <ul style="padding-left:20px"><li><b>痛点：</b>${arr(j.comment_insights?.pain_points)}</li><li><b>需求：</b>${arr(j.comment_insights?.needs)}</li><li><b>争议：</b>${arr(j.comment_insights?.controversies)}</li><li><b>新选题：</b>${arr(j.comment_insights?.topic_ideas)}</li></ul>
+      <p style="margin-top:10px"><b>数据评价</b></p>${obj(j.data_rating)}
+      <p style="margin-top:10px"><b>可复用方法论</b></p>${arr(j.reusable_playbook)}
+      <p style="margin-top:10px"><b>建议</b></p>${arr(j.suggestions)}
+    </div>`;
+  } catch {
+    return `<div class="md">${marked.parse(content || '')}</div>`;
+  }
+}
+async function reanalyze(id) {
+  await api(`/api/videos/${id}/analyze`, { method: 'POST', body: JSON.stringify({ force: true }) });
+  toast('已启动重跑分析，完成后刷新本页');
+}
+async function refreshComments(id) {
+  await api(`/api/videos/${id}/refresh-comments`, { method: 'POST', body: '{}' });
+  toast('评论重抓已启动');
+}
+async function downloadVideo(awemeId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '下载中…'; }
+  try { await api(`/api/videos/${awemeId}/download`, { method: 'POST', body: '{}' }); }
+  catch (e) { toast('❌ ' + e.message); if (btn) { btn.disabled = false; btn.textContent = '▶ 下载原视频到本地'; } return; }
+  // 轮询直到文件就绪（最多 2 分钟），完成后重新渲染出播放器
+  const started = Date.now();
+  const timer = setInterval(async () => {
+    let v;
+    try { v = await api(`/api/videos/${awemeId}`); } catch { return; }
+    if (v.hasFile) {
+      clearInterval(timer);
+      toast('✅ 视频已就绪');
+      if (currentVideo === awemeId) openVideoDetail(awemeId);
+    } else if (Date.now() - started > 120000) {
+      clearInterval(timer);
+      toast('下载超时，请稍后重试');
+      if (btn) { btn.disabled = false; btn.textContent = '▶ 下载原视频到本地'; }
+    } else if (btn && btn.isConnected) {
+      const left = Math.round((120000 - (Date.now() - started)) / 1000);
+      btn.textContent = '下载中… ' + left + 's';
+    }
+  }, 3000);
+}
+
+/* ============ 设置 ============ */
+let settings = null, configPath = '';
+async function loadSettings() {
+  const s = await api('/api/settings');
+  api('/api/disk-usage').then((u) => {
+    const box = document.getElementById('diskBox');
+    if (box) box.innerHTML = `💾 数据占用 <b>${u.totalMB}MB</b>（视频 ${u.videosMB}MB/${u.videoCount} 个 · 临时 ${u.tmpMB}MB · 数据库 ${u.dbMB}MB）${u.freeGB != null ? ' · 磁盘剩余 ' + u.freeGB + 'GB' : ''} · 手动清理：<code>npm run clean</code>`;
+  }).catch(() => {});
+  settings = s.providers.map((p) => ({ ...p, models: { analysts: [...(p.models?.analysts || [])], synthesizer: p.models?.synthesizer || '' } }));
+  settings._monitor = { ...s.monitor, transcribe: { ...(s.monitor?.transcribe || {}) } };
+  configPath = s.configPath;
+  renderSettings();
+}
+function renderSettings() {
+  const m = settings._monitor;
+  $('#settingsBox').innerHTML = `
+    <div class="card" style="max-width:860px">
+      <h4>LLM 接口 · OpenAI 兼容 · 可配置多个，分析时并行调用所有分析模型</h4>
+      <div id="providerList"></div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button class="btn-sm" onclick="addProvider()">＋ 添加接口</button>
+      </div>
+      <div class="meta" style="margin-top:12px;font-size:11.5px;color:var(--text3)">配置文件：${escapeHtml(configPath)}</div>
+    </div>
+    <div class="card" style="max-width:860px;margin-top:14px">
+      <h4>监控参数</h4>
+      <div class="form-grid">
+        <label>检查时间（cron）<input id="mCron" value="${escapeHtml(m.cron || '0 9 * * *')}"></label>
+        <label>高赞评论条数<input id="mComments" type="number" value="${m.topComments}"></label>
+        <label>每次拉几页投稿<input id="mPages" type="number" value="${m.maxPagesPerBlogger}"></label>
+        <label>单轮最多处理新视频<input id="mMax" type="number" value="${m.maxVideosPerCheck}"></label>
+        <label>whisper 模型<select id="mModel">
+          ${['tiny', 'base', 'small', 'medium', 'large-v3'].map((x) => `<option ${m.transcribe?.model === x ? 'selected' : ''}>${x}</option>`).join('')}
+        </select></label>
+        <label>视频保留天数（0=永久）<input id="mKeep" type="number" min="0" value="${m.keepVideoDays ?? 0}"></label>
+      </div>
+      <div id="diskBox" style="margin-top:12px;font-size:12px;color:var(--text2)">磁盘占用统计中…</div>
+      <div style="margin-top:14px;font-size:11.5px;color:var(--text3)">检查时间（cron）修改后需重启 daemon 生效；其余保存即生效</div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:16px;max-width:860px;align-items:center">
+      <button class="primary" onclick="saveSettings()">保存设置</button>
+      <span id="saveHint" style="color:var(--text2);font-size:12.5px"></span>
+    </div>`;
+  $('#providerList').innerHTML = settings.map((p, i) => `
+    <div class="provider-box" data-i="${i}">
+      <div class="form-grid">
+        <label>名称<input value="${escapeHtml(p.id || '')}" oninput="settings[${i}].id=this.value"></label>
+        <label>Base URL（OpenAI 兼容）<input value="${escapeHtml(p.baseUrl || '')}" placeholder="https://api.example.com/v1" oninput="settings[${i}].baseUrl=this.value"></label>
+        <label>API Key<input type="password" value="${escapeHtml(p.apiKey || '')}" placeholder="sk-..." oninput="settings[${i}].apiKey=this.value"></label>
+        <label>综合结论模型<input value="${escapeHtml(p.models.synthesizer || '')}" placeholder="deepseek-v4.1-flash" oninput="settings[${i}].models.synthesizer=this.value"></label>
+        <label style="grid-column:1/-1">分析模型（逗号分隔，并行）<input value="${escapeHtml((p.models.analysts || []).join(', '))}" placeholder="deepseek-v4.1-flash, qwen-3.8-flash" oninput="settings[${i}].models.analysts=this.value.split(/[，,]/).map(s=>s.trim()).filter(Boolean)"></label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <button class="btn-sm" onclick="testConn(${i})">测试连接</button>
+        ${settings.length > 1 ? `<button class="ghost btn-sm" onclick="removeProvider(${i})">移除</button>` : ''}
+        <span id="testResult${i}" style="font-size:12px;color:var(--text2)"></span>
+      </div>
+      <div id="modelList${i}" style="margin-top:8px"></div>
+    </div>`).join('');
+}
+function collectSettings() {
+  return {
+    providers: settings.map((p) => ({ id: p.id, baseUrl: p.baseUrl, apiKey: p.apiKey, enabled: p.enabled !== false, models: { analysts: p.models.analysts, synthesizer: p.models.synthesizer } })),
+    monitor: {
+      cron: $('#mCron').value,
+      topComments: $('#mComments').value,
+      maxPagesPerBlogger: $('#mPages').value,
+      maxVideosPerCheck: $('#mMax').value,
+      keepVideoDays: $('#mKeep').value,
+      transcribe: { model: $('#mModel').value, maxMinutes: settings._monitor.transcribe?.maxMinutes || 15 },
+    },
+  };
+}
+async function saveSettings() {
+  try {
+    const r = await api('/api/settings', { method: 'POST', body: JSON.stringify(collectSettings()) });
+    $('#saveHint').textContent = '✓ ' + r.note;
+    setTimeout(() => ($('#saveHint').textContent = ''), 5000);
+    loadMeta();
+  } catch (e) { toast('❌ ' + e.message, 5000); }
+}
+async function testConn(i) {
+  const el = $('#testResult' + i);
+  el.textContent = '测试中…';
+  try {
+    const r = await api('/api/settings/test', { method: 'POST', body: JSON.stringify({ baseUrl: settings[i].baseUrl, apiKey: settings[i].apiKey, model: settings[i].models.synthesizer }) });
+    el.textContent = '✓ 连接成功（' + r.via + '）'; el.style.color = 'var(--green)';
+    $('#modelList' + i).innerHTML = r.models.length
+      ? `<div style="font-size:11px;color:var(--text3);margin-bottom:4px">可用模型 ${r.models.length} 个，点击设为综合模型：</div><div id="modelList" style="display:flex;flex-wrap:wrap">${r.models.slice(0, 24).map((mm) => `<span class="pill wait" onclick="pickModel(${i},'${escapeHtml(mm)}')">${escapeHtml(mm)}</span>`).join('')}</div>`
+      : '';
+  } catch (e) {
+    el.textContent = '✕ ' + e.message; el.style.color = 'var(--red)';
+  }
+}
+function pickModel(i, model) {
+  settings[i].models.synthesizer = model;
+  if (!settings[i].models.analysts.length) settings[i].models.analysts = [model];
+  renderSettings();
+  toast('已把 ' + model + ' 设为综合模型，记得保存');
+}
+function addProvider() {
+  settings.push({ id: 'provider-' + (settings.length + 1), baseUrl: '', apiKey: '', enabled: true, models: { analysts: [], synthesizer: '' } });
+  renderSettings();
+}
+function removeProvider(i) { settings.splice(i, 1); renderSettings(); }
+
+$('#addInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addBlogger(); });
+$('#searchKw').addEventListener('keydown', (e) => { if (e.key === 'Enter') startSearchAnalyze(); });
+applyThemeIcon();
+
+loadMeta();
+pollAuth();
+loadBloggers();
+loadSettings().catch(() => {});
+loadJobs();
+setInterval(loadBloggers, 12000);
+setInterval(pollAuth, 60000);
+setInterval(loadJobs, 3000);
+setInterval(() => { if (currentTab === 'logs') refreshLogs(); }, 5000);
+</script>
+</body>
+</html>
