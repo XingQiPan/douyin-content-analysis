@@ -132,7 +132,7 @@ export async function checkBlogger(blogger, { maxPages, limitVideos, headless = 
     for (const v of videos) {
       const r = insertVideo(bloggerId, v);
       if (r.isNew) newVideos.push(v.awemeId);
-      else if (v.cover && !getVideoByAwemeId(v.aweme_id)?.cover) updateVideo(v.aweme_id, { cover: v.cover });
+      else if (v.cover && !getVideoByAwemeId(v.awemeId)?.cover) updateVideo(v.awemeId, { cover: v.cover });
       // 数据快照：每次检查记录一次互动数据，供增长曲线使用
       insertVideoSnapshot(v.awemeId, v.stats || {});
       
